@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Class, Task, Quiz, Assignment, Note, Priority, SubmissionStatus, AnyItem } from '../types';
 import { db, auth } from '../src/lib/firebase';
 import { sendNotification } from '../src/utils/notifications';
@@ -16,6 +16,28 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
     const [streak, setStreak] = useState<number>(0);
     const [lastStudyDate, setLastStudyDate] = useState<string | null>(null);
     const notifiedIds = useRef<Set<string>>(new Set());
+    
+    // Centralized Helper for Streak Logic
+    const updateDailyActivityStreak = async (userId: string) => {
+        const today = new Date().toDateString();
+        // 1. If today already counted, return
+        if (lastStudyDate === today) return;
+
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        let newStreak = 1;
+
+        // 2. If yesterday was the last activity, increment
+        if (lastStudyDate === yesterday) {
+            newStreak = streak + 1;
+        } 
+        // 3. Otherwise (older or null), reset to 1
+
+        // 4. Update Firestore
+        await setDoc(doc(db, 'user_stats', userId), {
+            streak: newStreak,
+            lastStudyDate: today
+        }, { merge: true });
+    };
 
     // Real-time Sync with Firestore
     useEffect(() => {
@@ -138,6 +160,7 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
                 const startUpdate = { ...currentItem };
                 delete (startUpdate as any).id;
                 await updateDoc(docRef, startUpdate);
+                await updateDailyActivityStreak(user.uid);
 
             } else { // Add
                 // Add timestamp and userId
@@ -161,6 +184,7 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
 
                 try {
                     const docRef = await addDoc(collection(db, collectionName), newItem);
+                    await updateDailyActivityStreak(user.uid);
 
                 } catch (innerError) {
                     console.error(`[DataManagement] CRITICAL ERROR adding to ${collectionName}:`, innerError);
@@ -181,27 +205,9 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
                 const newCompleted = !task.completed;
                 await updateDoc(doc(db, 'tasks', id), { completed: newCompleted });
 
-                // Handle streak logic
+                // Handle centralized streak logic
                 if (newCompleted) {
-                    const today = new Date().toDateString();
-                    let newStreak = streak;
-
-                    if (lastStudyDate === today) {
-                        // Already studied today
-                    } else if (lastStudyDate === new Date(Date.now() - 86400000).toDateString()) {
-                        // Yesterday, increment streak
-                        newStreak = streak + 1;
-                    } else {
-                        // Break in streak, reset to 1
-                        newStreak = 1;
-                    }
-
-                    if (lastStudyDate !== today) {
-                        await setDoc(doc(db, 'user_stats', user.uid), {
-                            streak: newStreak,
-                            lastStudyDate: today
-                        }, { merge: true });
-                    }
+                    await updateDailyActivityStreak(user.uid);
                 }
             } catch (error) {
                 console.error("Error toggling task: ", error);
@@ -292,7 +298,7 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
         return () => clearInterval(interval);
     }, [tasks, quizzes, assignments]);
 
-    const getPublicNote = async (noteId: string): Promise<Note | null> => {
+    const getPublicNote = useCallback(async (noteId: string): Promise<Note | null> => {
         try {
             const docRef = doc(db, 'notes', noteId);
             const docSnap = await getDoc(docRef);
@@ -308,9 +314,9 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
             console.error("Error fetching public note:", error);
             return null;
         }
-    };
+    }, []);
 
-    const getPublicSchedule = async (userId: string): Promise<Class[]> => {
+    const getPublicSchedule = useCallback(async (userId: string): Promise<Class[]> => {
         try {
             const q = query(collection(db, 'classes'), where('userId', '==', userId));
             const snapshot = await getDocs(q);
@@ -319,7 +325,7 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
             console.error("Error fetching public schedule:", error);
             return [];
         }
-    };
+    }, []);
 
     const importData = async (jsonData: any) => {
         if (!user) throw new Error("User must be logged in to import data.");

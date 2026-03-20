@@ -1,1 +1,1 @@
-export const IS_RAMADAN = true;
+export const IS_RAMADAN = false;

@@ -10,7 +10,7 @@ import { IS_RAMADAN } from '../src/config/theme';
 import { useDataManagement } from '../hooks/useDataManagement';
 import Card from './ui/Card';
 
-import { Task, Class, Note, Assignment, Quiz } from '../types';
+import { Task, Class, Note, Assignment, Quiz, AnyItem } from '../types';
 
 interface SmartAssistantProps {
   isOpen?: boolean;
@@ -20,9 +20,10 @@ interface SmartAssistantProps {
   notes: Note[];
   assignments: Assignment[];
   quizzes: Quiz[];
+  handleSave: (view: 'schedule' | 'tasks' | 'quizzes' | 'assignments' | 'notes', originalItem?: AnyItem, currentItem?: Partial<AnyItem>) => Promise<void>;
 }
 
-const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen, onClose: externalOnClose, tasks, classes, notes, assignments, quizzes }) => {
+const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen, onClose: externalOnClose, tasks, classes, notes, assignments, quizzes, handleSave }) => {
   const { t, language } = useLanguage();
   // Removed local useDataManagement hook call to prevent duplicate listeners
   // const { tasks, classes, notes, assignments, quizzes } = useDataManagement();
@@ -50,7 +51,54 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
 
     try {
       const responseText = await getGeminiResponse(messages, input, language, { tasks, classes, notes, assignments, quizzes });
-      const modelMessage: ChatMessage = { role: 'model', text: responseText };
+      
+      let displayText = responseText;
+      
+      // Parse JSON for Agent Actions
+      const jsonStart = responseText.indexOf('{');
+      const jsonEnd = responseText.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+         try {
+           const jsonString = responseText.substring(jsonStart, jsonEnd + 1);
+           const parsed = JSON.parse(jsonString);
+           if (parsed.action && parsed.payload) {
+             let view: 'schedule' | 'tasks' | 'quizzes' | 'assignments' | 'notes' | null = null;
+             let isValid = false;
+
+             if (parsed.action === 'ADD_TASK') {
+               view = 'tasks';
+               isValid = !!parsed.payload.title;
+             } else if (parsed.action === 'ADD_CLASS') {
+               view = 'schedule';
+               isValid = !!(parsed.payload.subject && parsed.payload.day);
+             } else if (parsed.action === 'ADD_NOTE') {
+               view = 'notes';
+               isValid = !!(parsed.payload.title || parsed.payload.subject);
+             } else if (parsed.action === 'ADD_QUIZ') {
+               view = 'quizzes';
+               isValid = !!(parsed.payload.subject && parsed.payload.date);
+             }
+             
+             if (view && isValid) {
+               await handleSave(view, undefined, parsed.payload);
+               // Replace the extracted JSON block with a success notification
+               // If there was extra text, it will be preserved
+               displayText = responseText.replace(jsonString, '✅ تم الإضافة بنجاح!');
+             } else {
+                 throw new Error("Validation Error: Missing required payload fields or unknown action.");
+             }
+           } else {
+               throw new Error("Validation Error: Missing action or payload objects.");
+           }
+         } catch (e) {
+           console.warn("Failed to parse or validate AI JSON action:", e);
+           // Fallback to error message, overriding the broken JSON text
+           displayText = "عذراً، أحتاج تفاصيل أكثر لتنفيذ الأمر. يرجى توضيح المطلوب بدقة.";
+         }
+      }
+
+      const modelMessage: ChatMessage = { role: 'model', text: displayText };
       setMessages(prev => [...prev, modelMessage]);
     } catch (error) {
       const errorMessage: ChatMessage = { role: 'model', text: t('geminiError') };

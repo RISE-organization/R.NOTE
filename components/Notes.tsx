@@ -76,6 +76,10 @@ const Notes: React.FC<NotesProps> = ({ notes, onAdd, onUpdate, onDelete, searchQ
 
   const handleShare = (e: React.MouseEvent, noteId: string) => {
     e.stopPropagation();
+    const noteToShare = notes.find(n => n.id === noteId);
+    if (noteToShare && !noteToShare.isPublic) {
+      onUpdate({ ...noteToShare, isPublic: true });
+    }
     const url = `${window.location.origin}/share/${noteId}`;
     navigator.clipboard.writeText(url).then(() => {
       setToastMessage("Link copied!");

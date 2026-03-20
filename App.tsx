@@ -31,6 +31,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 import RamadanDecor from './components/RamadanDecor';
+import { IS_RAMADAN } from './src/config/theme';
 
 const App: React.FC = () => {
     return (
@@ -259,7 +260,7 @@ const AppContent: React.FC = () => {
                     {toast.msg}
                 </div>
             )}
-            <RamadanDecor />
+            {IS_RAMADAN && <RamadanDecor />}
             <PWAInstallPrompt />
             {/* 🌊 Organic Liquid Background - Visible only in Dark Mode */}
             <div className="absolute inset-0 w-full h-full pointer-events-none hidden dark:block">
@@ -321,6 +322,7 @@ const AppContent: React.FC = () => {
                     notes={notes}
                     assignments={assignments}
                     quizzes={quizzes}
+                    handleSave={saveData}
                 />
             </div>
 

@@ -73,8 +73,7 @@ const Pomodoro: React.FC = () => {
                 </div>
 
                 <div className="text-sm text-slate-600 dark:text-gray-400 mb-8 flex items-center justify-center space-x-2 bg-slate-50 dark:bg-white/5 py-2 px-4 rounded-full inline-flex">
-                    <span className="flex">{Array.from({ length: sessions }, (_, i) => <span key={i} className="text-lg">🍅</span>)}</span>
-                    <span className="ms-2 font-medium">{sessions} {sessions === 1 ? t('session') : t('sessions')}</span>
+                    <span className="font-medium">{sessions} {sessions === 1 ? t('session') : t('sessions')}</span>
                 </div>
 
                 <div className="flex justify-center space-x-4">
