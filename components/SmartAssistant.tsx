@@ -178,7 +178,7 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 end-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg z-50 transition-transform hover:scale-110"
+        className="fixed bottom-6 end-6 bg-[#f5f5dc] hover:bg-[#ede0c8] text-slate-800 rounded-full p-3 shadow-lg z-50 transition-transform hover:scale-110 ring-2 ring-amber-200"
         aria-label="Open Smart Assistant"
       >
         {ICONS.ai}
