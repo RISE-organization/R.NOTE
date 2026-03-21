@@ -156,13 +156,14 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, 
                     return slotTime.hour === classTime.hour && slotTime.meridiem === classTime.meridiem;
                   });
 
-                  const getColorClass = (colorClass: string) => {
-                    let finalColor = colorClass;
+                  const getColorClass = (colorClass: string | undefined) => {
+                    const safeColorClass = colorClass || 'bg-indigo-600';
+                    let finalColor = safeColorClass;
 
                     // Map legacy/problematic colors to new high-contrast ones
-                    if (colorClass.includes('yellow')) finalColor = 'bg-orange-600';
-                    else if (colorClass.includes('pink') || colorClass.includes('rose')) finalColor = 'bg-teal-600';
-                    else if (colorClass.includes('purple') || colorClass.includes('indigo')) finalColor = 'bg-cyan-600';
+                    if (safeColorClass.includes('yellow')) finalColor = 'bg-orange-600';
+                    else if (safeColorClass.includes('pink') || safeColorClass.includes('rose')) finalColor = 'bg-teal-600';
+                    else if (safeColorClass.includes('purple') || safeColorClass.includes('indigo')) finalColor = 'bg-cyan-600';
 
                     // Map base colors to their dark mode variants with opacity
                     return `${finalColor} dark:${finalColor}/80`;
