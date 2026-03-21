@@ -55,13 +55,12 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
       let displayText = responseText;
       
       // Parse JSON for Agent Actions
-      const jsonStart = responseText.indexOf('{');
-      const jsonEnd = responseText.lastIndexOf('}');
+      const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+      const match = responseText.match(jsonRegex);
       
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      if (match && match[1]) {
          try {
-           const jsonString = responseText.substring(jsonStart, jsonEnd + 1);
-           const parsed = JSON.parse(jsonString);
+           const parsed = JSON.parse(match[1]);
            if (parsed.action && parsed.payload) {
              let view: 'schedule' | 'tasks' | 'quizzes' | 'assignments' | 'notes' | null = null;
              let isValid = false;
@@ -82,9 +81,8 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
              
              if (view && isValid) {
                await handleSave(view, undefined, parsed.payload);
-               // Replace the extracted JSON block with a success notification
-               // If there was extra text, it will be preserved
-               displayText = responseText.replace(jsonString, '✅ تم الإضافة بنجاح!');
+               // Replace the JSON block with a success notification
+               displayText = responseText.replace(jsonRegex, '✅ تم الإضافة بنجاح!');
              } else {
                  throw new Error("Validation Error: Missing required payload fields or unknown action.");
              }

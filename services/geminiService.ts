@@ -40,12 +40,12 @@ export const getGeminiResponse = async (
 
     const chat = model.startChat({
       history: historyForGemini,
-      generationConfig: { maxOutputTokens: 1000 },
+      generationConfig: { maxOutputTokens: 4096 },
     });
 
     const context = buildContext(data);
     const dataInfo = `إليك ملخص بيانات الطالب: ${JSON.stringify(context)}`;
-    const systemInstruction = `أنت مساعد طلابي ذكي اسمه R.Note AI. هدفك مساعدة الطالب في تنظيم وقته ودراسته. ${dataInfo}. تكلم باللهجة العراقية الودودة أو العربية الفصحى حسب لغة الطالب. كن مختصراً ومباشراً. 
+    const systemInstruction = `أنت مساعد طلابي ذكي اسمه R.Note AI. هدفك مساعدة الطالب في تنظيم وقته ودراسته. ${dataInfo}. تكلم باللهجة العراقية الودودة أو العربية الفصحى حسب لغة الطالب. كن مختصراً ومباشراً، وتأكد من إكمال جملك وردودك بالكامل حتى النهاية.
     
     IMPORTANT: If the user asks you to ADD or CREATE something (e.g., a task, class, note), you MUST respond ONLY with a JSON object wrapped in a markdown code block exactly like this:
     \`\`\`json
