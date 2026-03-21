@@ -31,7 +31,7 @@ export const getGeminiResponse = async (
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const historyForGemini = history.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
@@ -40,12 +40,15 @@ export const getGeminiResponse = async (
 
     const chat = model.startChat({
       history: historyForGemini,
-      generationConfig: { maxOutputTokens: 1000 },
+      generationConfig: { 
+        maxOutputTokens: 2048,
+        temperature: 0.7 
+      },
     });
 
     const context = buildContext(data);
     const dataInfo = `إليك ملخص بيانات الطالب: ${JSON.stringify(context)}`;
-    const systemInstruction = `أنت مساعد طلابي ذكي اسمه R.Note AI. هدفك مساعدة الطالب في تنظيم وقته ودراسته. ${dataInfo}. تكلم باللهجة العراقية الودودة أو العربية الفصحى حسب لغة الطالب. كن مختصراً ومباشراً. 
+    const systemInstruction = `أنت مساعد طلابي ذكي اسمه R.Note AI. هدفك مساعدة الطالب في تنظيم وقته ودراسته. ${dataInfo}. تكلم باللهجة العراقية الودودة أو العربية الفصحى حسب لغة الطالب. كن مختصراً ومباشراً، وتأكد من إكمال جملك وردودك بالكامل حتى النهاية.
     
     IMPORTANT: If the user asks you to ADD or CREATE something (e.g., a task, class, note, or quiz), you MUST output ONLY a valid JSON object. DO NOT output any conversational text. DO NOT use markdown code blocks like \`\`\`json. Your response must start exactly with { and end exactly with }.
     
