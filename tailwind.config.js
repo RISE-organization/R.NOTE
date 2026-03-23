@@ -31,8 +31,13 @@ export default {
       fourth: "moveHorizontal 40s ease infinite",
       fifth: "moveInCircle 20s ease infinite",
       swing: "swing 3s ease-in-out infinite",
+      "breathe-glow": "breathe-glow 4s ease-in-out infinite",
     },
     keyframes: {
+      "breathe-glow": {
+        "0%, 100%": { boxShadow: "0 0 15px rgba(249, 115, 22, 0.2)" },
+        "50%": { boxShadow: "0 0 40px rgba(249, 115, 22, 0.6), 0 0 60px rgba(249, 115, 22, 0.2)" },
+      },
       swing: {
         "0%, 100%": { transform: "rotate(10deg)" },
         "50%": { transform: "rotate(-10deg)" },
