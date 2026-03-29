@@ -54,7 +54,7 @@ const AppContent: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const { t } = useLanguage();
 
-    const { classes, tasks, quizzes, assignments, notes, streak, handleDelete, handleSave: saveData, handleToggleTask, handleNoteUpdate, clearAllData } = useDataManagement();
+    const { classes, tasks, quizzes, assignments, notes, streak, handleDelete, handleSave: saveData, handleToggleTask, handleToggleAssignment, handleToggleQuiz, handleNoteUpdate, clearAllData } = useDataManagement();
 
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
@@ -295,8 +295,8 @@ const AppContent: React.FC = () => {
                             <Route path="/dashboard" element={<Dashboard tasks={tasks} quizzes={quizzes} notes={notes} assignments={assignments} streak={streak} openModal={openModal} />} />
                             <Route path="/schedule" element={<ClassSchedule classes={classes} tasks={tasks} quizzes={quizzes} assignments={assignments} onDelete={(id) => handleDelete(id, 'schedule')} onEdit={(item) => openModal('schedule', item)} />} />
                             <Route path="/tasks" element={<Tasks tasks={tasks} onToggleComplete={handleToggleTask} onDelete={(id) => handleDelete(id, 'tasks')} onEdit={(item) => openModal('tasks', item)} searchQuery={searchQuery} />} />
-                            <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
-                            <Route path="/assignments" element={<Assignments assignments={assignments} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
+                            <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onToggleComplete={handleToggleQuiz} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
+                            <Route path="/assignments" element={<Assignments assignments={assignments} onToggleComplete={handleToggleAssignment} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
                             <Route path="/notes" element={<Notes notes={notes} onAdd={() => openModal('notes')} onUpdate={handleNoteUpdate} onDelete={(id) => handleDelete(id, 'notes')} searchQuery={searchQuery} />} />
                             <Route path="/pomodoro" element={<Pomodoro />} />
 

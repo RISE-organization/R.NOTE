@@ -35,13 +35,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // بيانات المستخدم وإحصائياته
+    // بيانات الحساب الخاصة (مخفية للجميع إلا لصاحب الحساب)
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
     
+    // إحصائيات دراسة المستخدم (تُقرأ للجميع كلوحة أبطال، وتُعدل من صاحبها فقط)
     match /user_stats/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn(); // ✅ الكل يقدر يقراها حتى يشتغل Leaderboard
+      allow write: if isSignedIn() && request.auth.uid == userId; // 🔒 التغيير فقط لك
     }
 
     // ---------------------------------------------------------

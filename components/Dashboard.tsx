@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import Layout from './Layout';
 import PageTour from './PageTour';
 import { IS_RAMADAN } from '../src/config/theme';
+import LeaderboardModal from './LeaderboardModal';
 
 interface DashboardProps {
     tasks: Task[];
@@ -36,6 +37,7 @@ const PriorityBadge: React.FC<{ priority: Priority }> = ({ priority }) => {
 const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes = [], assignments = [], streak = 0, openModal }) => {
     const { t, language } = useLanguage();
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -52,17 +54,26 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
     }, [tasks]);
 
     const todaysTasks = (tasks || []).filter(task => task.dueDate === today && !task.completed);
-    const upcomingQuizzes = (quizzes || []).filter(quiz => {
-        if (!quiz.date) return false;
-        const date = new Date(quiz.date);
-        return !isNaN(date.getTime()) && date >= new Date();
-    }).slice(0, 3);
+    const upcomingQuizzes = (quizzes || [])
+        .filter(quiz => {
+            if (quiz.completed) return false;
+            if (!quiz.date) return false;
+            const date = new Date(quiz.date);
+            date.setHours(0, 0, 0, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return !isNaN(date.getTime()) && date.getTime() >= today.getTime();
+        })
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 3);
 
-    const upcomingAssignments = (assignments || []).sort((a, b) => {
-        const dateA = new Date(a.dueDate).getTime();
-        const dateB = new Date(b.dueDate).getTime();
-        return dateA - dateB;
-    }).slice(0, 3);
+    const upcomingAssignments = (assignments || [])
+        .filter(a => a.status !== 'Submitted')
+        .sort((a, b) => {
+            const dateA = new Date(a.dueDate).getTime();
+            const dateB = new Date(b.dueDate).getTime();
+            return dateA - dateB;
+        }).slice(0, 3);
 
     const totalTasks = (tasks || []).length;
     const taskCompletionData = [
@@ -153,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                                                     <p className="font-semibold text-slate-700 dark:text-gray-200">{quiz.subject}</p>
                                                     <div className="flex items-center text-xs text-slate-500 dark:text-gray-400 mt-1">
                                                         <span className="me-2">📅</span>
-                                                        {new Date(quiz.date).toLocaleDateString()}
+                                                        {quiz.date && !isNaN(new Date(quiz.date).getTime()) ? new Date(quiz.date).toLocaleDateString() : ''}
                                                     </div>
                                                 </div>
                                                 {quiz.materialsUrl && <a href={quiz.materialsUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 p-1">{t('materials')}</a>}
@@ -184,15 +195,15 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                                     <div className="space-y-3">
                                         {upcomingAssignments.map(assignment => (
                                             <div key={assignment.id} className="flex items-center px-4 py-3 text-sm rounded-xl bg-slate-50 dark:bg-gray-700/50 hover:bg-slate-100 dark:hover:bg-gray-700 transition-colors justify-between border border-slate-100 dark:border-gray-600">
-                                                <div>
-                                                    <p className="font-semibold text-slate-700 dark:text-gray-200 truncate">{assignment.title}</p>
-                                                    <div className="flex items-center text-xs text-slate-500 dark:text-gray-400 mt-1">
-                                                        <span className="me-1">{assignment.subject}</span>
-                                                        <span className="mx-1">•</span>
-                                                        <span>{new Date(assignment.dueDate).toLocaleDateString()}</span>
+                                                <div className="flex-1 min-w-0 me-3">
+                                                    <p dir="auto" className="font-semibold text-slate-700 dark:text-gray-200 text-start line-clamp-1">{assignment.title}</p>
+                                                    <div className="flex items-center text-xs text-slate-500 dark:text-gray-400 mt-1 truncate">
+                                                        <span dir="auto" className="me-1 truncate">{assignment.subject}</span>
+                                                        <span className="mx-1 shrink-0">•</span>
+                                                        <span className="shrink-0">{assignment.dueDate && !isNaN(new Date(assignment.dueDate).getTime()) ? new Date(assignment.dueDate).toLocaleDateString() : 'N/A'}</span>
                                                     </div>
                                                 </div>
-                                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${assignment.status === 'Submitted'
+                                                <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap ${assignment.status === 'Submitted'
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
                                                     : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
                                                     }`}>
@@ -203,8 +214,12 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-full text-center py-6">
-                                        <p className="text-slate-400 dark:text-gray-500 mb-2 text-4xl">📝</p>
-                                        <p className="text-slate-500 dark:text-gray-400 font-medium">{t('noPendingTasks')}</p>
+                                        <div className="bg-emerald-50 dark:bg-emerald-900/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-800/50">
+                                            <span className="text-emerald-500 text-2xl">✨</span>
+                                        </div>
+                                        <p className="text-slate-600 dark:text-emerald-200 font-medium">
+                                            {language === 'ar' ? 'لا توجد واجبات معلقة، عمل رائع!' : 'No pending assignments. Great job!'}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -215,12 +230,20 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                 {/* Right Column - Secondary Content (30% width) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Study Streak */}
-                    <div className="bg-white dark:bg-white/5 backdrop-blur-2xl rounded-2xl shadow-sm border border-orange-200 dark:border-orange-500/40 p-6 text-slate-800 dark:text-white">
-                        <div className="text-center">
-                            <div className="text-4xl mb-2">🔥</div>
-                            <h3 className="text-lg font-bold text-orange-700 dark:text-orange-100 mb-1">{t('studyStreak')}</h3>
-                            <p className="text-2xl font-bold text-orange-600 dark:text-orange-200">{streak}</p>
-                            <p className="text-sm text-orange-600/80 dark:text-orange-300">{streak === 1 ? t('daysInARow') : t('daysInARowPlural')}</p>
+                    <div className="relative bg-white dark:bg-white/5 backdrop-blur-2xl rounded-2xl shadow-sm border border-orange-200 dark:border-orange-500/40 p-6 text-slate-800 dark:text-white">
+                        <div className="text-center flex flex-col items-center">
+                            <div className="text-4xl mb-2 drop-shadow-sm">🔥</div>
+                            <h3 className="text-lg font-bold text-orange-700 dark:text-orange-300 mb-1">{t('studyStreak')}</h3>
+                            <p className="text-3xl font-extrabold text-orange-600 dark:text-orange-400 mb-1">{streak}</p>
+                            <p className="text-sm font-medium text-orange-600/80 dark:text-orange-300 mb-5">{streak === 1 ? t('daysInARow') : t('daysInARowPlural')}</p>
+                            
+                            <button 
+                                onClick={() => setIsLeaderboardOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-sm font-bold rounded-xl transition-all shadow-sm w-full justify-center active:scale-95"
+                            >
+                                <span className="text-base">🏆</span> 
+                                {language === 'ar' ? 'لوحة الأبطال' : 'Leaderboard'}
+                            </button>
                         </div>
                     </div>
 
@@ -318,6 +341,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
                 </div>
             )}
+            <LeaderboardModal 
+                isOpen={isLeaderboardOpen} 
+                onClose={() => setIsLeaderboardOpen(false)} 
+                currentUserStreak={streak} 
+            />
         </Layout>
     );
 };

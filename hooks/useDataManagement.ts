@@ -32,10 +32,12 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
         } 
         // 3. Otherwise (older or null), reset to 1
 
-        // 4. Update Firestore
+        // 4. Update Firestore with user profile details for Leaderboard
         await setDoc(doc(db, 'user_stats', userId), {
             streak: newStreak,
-            lastStudyDate: today
+            lastStudyDate: today,
+            displayName: user?.displayName || user?.email?.split('@')[0] || 'Unknown Student',
+            photoURL: user?.photoURL || null,
         }, { merge: true });
     };
 
@@ -96,14 +98,32 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
             setNotes(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Note)));
         });
 
-        const unsubStats = onSnapshot(qStats, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
+        const unsubStats = onSnapshot(qStats, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
                 setStreak(data.streak || 0);
                 setLastStudyDate(data.lastStudyDate || null);
+                
+                // Sync name if it's missing (keeps leaderboard up to date)
+                if (!data.displayName && user) {
+                    setDoc(doc(db, 'user_stats', user.uid), {
+                        displayName: user.displayName || user.email?.split('@')[0] || 'Unknown Student',
+                        photoURL: user.photoURL || null,
+                    }, { merge: true }).catch(console.error);
+                }
             } else {
                 setStreak(0);
                 setLastStudyDate(null);
+                
+                // Initialize empty streak with user metadata for leaderboard visibility
+                if (user) {
+                    setDoc(doc(db, 'user_stats', user.uid), {
+                        streak: 0,
+                        lastStudyDate: null,
+                        displayName: user.displayName || user.email?.split('@')[0] || 'Unknown Student',
+                        photoURL: user.photoURL || null,
+                    }, { merge: true }).catch(console.error);
+                }
             }
         });
 
@@ -211,6 +231,42 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
                 }
             } catch (error) {
                 console.error("Error toggling task: ", error);
+            }
+        }
+    };
+
+    const handleToggleAssignment = async (id: string) => {
+        if (!user) return;
+        const assignment = assignments.find(a => a.id === id);
+        if (assignment) {
+            try {
+                const newStatus = assignment.status === SubmissionStatus.Submitted ? SubmissionStatus.NotSubmitted : SubmissionStatus.Submitted;
+                await updateDoc(doc(db, 'assignments', id), { status: newStatus });
+
+                // Handle centralized streak logic
+                if (newStatus === SubmissionStatus.Submitted) {
+                    await updateDailyActivityStreak(user.uid);
+                }
+            } catch (error) {
+                console.error("Error toggling assignment: ", error);
+            }
+        }
+    };
+
+    const handleToggleQuiz = async (id: string) => {
+        if (!user) return;
+        const quiz = quizzes.find(q => q.id === id);
+        if (quiz) {
+            try {
+                const newCompleted = !quiz.completed;
+                await updateDoc(doc(db, 'quizzes', id), { completed: newCompleted });
+
+                // Handle centralized streak logic
+                if (newCompleted) {
+                    await updateDailyActivityStreak(user.uid);
+                }
+            } catch (error) {
+                console.error("Error toggling quiz: ", error);
             }
         }
     };
@@ -406,6 +462,8 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
         handleDelete,
         handleSave,
         handleToggleTask,
+        handleToggleAssignment,
+        handleToggleQuiz,
         handleNoteUpdate,
         clearAllData,
         getPublicNote,

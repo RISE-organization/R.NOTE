@@ -4,7 +4,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../src/context/AuthContext';
 import { IS_RAMADAN } from '../src/config/theme';
 import { updateProfile } from 'firebase/auth';
-import { auth } from '../src/lib/firebase';
+import { auth, db } from '../src/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { useDataManagement } from '../hooks/useDataManagement';
 
 import { Task, Class, Note, Assignment, Quiz } from '../types';
@@ -40,12 +41,18 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
     const [imageError, setImageError] = React.useState<boolean>(false);
     const [nameSaved, setNameSaved] = React.useState(false);
 
-    const handleSaveName = async () => {
+    const handleSaveName = async (e?: React.SyntheticEvent) => {
+        if (e) e.preventDefault();
         localStorage.setItem('studentName', studentName);
         if (auth.currentUser) {
             try {
                 await updateProfile(auth.currentUser, { displayName: studentName });
+                
+                // Sync to BOTH collections for Leaderboard & Profile consistency
+                await setDoc(doc(db, 'users', auth.currentUser.uid), { displayName: studentName }, { merge: true });
+                await setDoc(doc(db, 'user_stats', auth.currentUser.uid), { displayName: studentName }, { merge: true });
             } catch (e) {
+                console.error("Failed to sync name to Firebase:", e);
                 // Non-critical — localStorage is the fallback
             }
         }
@@ -71,12 +78,29 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Prevent huge base64 strings from crashing Firestore (Limit ~1MB)
+            if (file.size > 1048576) {
+                alert(t('imageTooLarge') || 'Image is too large. Please select a file smaller than 1MB.');
+                return;
+            }
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
                 const result = reader.result as string;
                 setAvatar(result);
                 setImageError(false);
                 localStorage.setItem('avatar', result);
+
+                if (auth.currentUser) {
+                    try {
+                        await updateProfile(auth.currentUser, { photoURL: result });
+                        
+                        // Sync to BOTH collections for Leaderboard & Profile consistency
+                        await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: result }, { merge: true });
+                        await setDoc(doc(db, 'user_stats', auth.currentUser.uid), { photoURL: result }, { merge: true });
+                    } catch (e) {
+                        console.error("Failed to sync avatar to Firebase:", e);
+                    }
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -136,7 +160,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
             <h1 className={`text-3xl font-bold mb-6 ${IS_RAMADAN ? 'text-gold-gradient' : 'text-gray-800 dark:text-white'}`}>{t('profileSettings')}</h1>
 
             <div className={`max-w-md lg:max-w-lg mx-auto backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl rounded-[32px] p-8 transition-colors duration-300 ${IS_RAMADAN ? 'card-royal' : 'bg-white dark:bg-slate-900/60'}`}>
-                <form>
+                <form onSubmit={e => e.preventDefault()}>
                     {/* Profile Picture */}
                     <div className="mb-8 text-center">
                         {(!avatar || imageError) ? (
@@ -173,9 +197,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
                                 type="text"
                                 value={studentName}
                                 onChange={e => setStudentName(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                                onKeyDown={e => e.key === 'Enter' && handleSaveName(e)}
                             />
                             <button
+                                type="button"
                                 onClick={handleSaveName}
                                 className={`mt-4 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95 ${nameSaved
                                     ? 'bg-emerald-500 text-white shadow-emerald-500/20'

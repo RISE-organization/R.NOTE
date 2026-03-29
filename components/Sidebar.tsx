@@ -122,7 +122,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                         {language === 'ar' ? 'تثبيت التطبيق' : 'Install App'}
                     </button>
                 )}
-                <p className="text-xs text-slate-400 dark:text-gray-600">v2.0.0</p>
+                <p className="text-xs text-slate-400 dark:text-gray-600">v2.1.0</p>
                 <div className="text-[10px] text-slate-500 dark:text-gray-500">
                     Built with <span className="text-red-500">♥</span> by <a href="https://fahadwm101.github.io/FAHAD.GITHUP/" target="_blank" rel="noopener noreferrer" className="font-bold hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors">CHEETAH</a>
                 </div>

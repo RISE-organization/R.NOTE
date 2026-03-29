@@ -38,6 +38,7 @@ export interface Quiz {
   date: string;
   materialsUrl?: string;
   createdAt?: string;
+  completed?: boolean;
 }
 
 export interface Assignment {
