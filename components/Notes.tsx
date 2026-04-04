@@ -184,7 +184,7 @@ const Notes: React.FC<NotesProps> = ({ notes, onAdd, onUpdate, onDelete, searchQ
                       className={`group relative p-4 cursor-pointer ltr:border-l-4 rtl:border-r-4 transition-all duration-200 ${selectedNote?.id === note.id ? (IS_RAMADAN ? 'border-amber-500 bg-amber-500/10' : 'border-indigo-500 bg-white dark:bg-indigo-900/20 shadow-sm') : 'border-transparent hover:bg-slate-200 dark:hover:bg-white/10'}`}>
                       <h4 className={`font-semibold truncate ${selectedNote?.id === note.id ? (IS_RAMADAN ? 'text-slate-900 dark:text-amber-400' : 'text-indigo-700 dark:text-white') : 'text-slate-700 dark:text-white'}`}>{note.title}</h4>
                       <p className="text-[10px] text-slate-500 dark:text-white/50 mt-1">{formatDate(note.lastUpdated)}</p>
-                      <div className="absolute top-2 end-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-2 end-2 flex gap-1 opacity-60 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
                         <button onClick={(e) => handleShare(e, note.id)} className="p-1 text-slate-400 hover:text-indigo-500 dark:text-white/50 dark:hover:text-indigo-400">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                         </button>

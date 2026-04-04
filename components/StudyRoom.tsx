@@ -201,7 +201,7 @@ export const StudyRoom: React.FC = () => {
                                 <span className={`${language === 'ar' ? 'font-arabic' : 'font-sans'} text-white text-[10px] sm:text-xs font-bold tracking-wide`}>
                                     {roomData?.name || (language === 'ar' ? 'غرفة الدراسة' : 'Study Room')}
                                 </span>
-                                {isHost && <Edit2 className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                {isHost && <Edit2 className="w-3 h-3 text-slate-500 opacity-60 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity" />}
                             </div>
                         )}
                     </div>
@@ -399,7 +399,7 @@ export const StudyRoom: React.FC = () => {
                                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full shadow-sm shadow-emerald-500/20 z-10" />
                                 )}
 
-                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-slate-950 text-[9px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-tighter">
+                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-slate-950 text-[9px] font-black rounded-lg opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-tighter">
                                     {member?.name || 'Peer'}
                                 </div>
                             </div>

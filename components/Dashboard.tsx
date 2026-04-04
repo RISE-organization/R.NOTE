@@ -93,10 +93,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
 
             <div className="flex-1 flex flex-col gap-10 relative overflow-hidden" style={{ background: 'transparent !important' }}>
 
-                {/* Row 1: Hero & Study Streak (1/3 : 2/3 Split on XL) */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                {/* Row 1: Hero & Study Streak (1/3 : 2/3 Split on LG+) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Hero Section */}
-                    <div className={`xl:col-span-2 p-4 sm:p-6 text-center group relative overflow-hidden transition-all duration-700 h-full flex flex-col justify-center rounded-[24px] bg-gradient-to-br from-indigo-800 to-purple-900 shadow-xl border border-purple-500/30 dark:border-purple-500/20`}>
+                    <div className={`lg:col-span-2 p-4 sm:p-6 md:p-8 text-center group relative overflow-hidden transition-all duration-700 h-full flex flex-col justify-center rounded-[24px] bg-gradient-to-br from-indigo-800 to-purple-900 shadow-xl border border-purple-500/30 dark:border-purple-500/20`}>
                         <div className="relative z-10">
                             <h2 className="text-2xl lg:text-3xl font-black text-white mb-2 flex items-center justify-center gap-3 drop-shadow-md">
                                 <span className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm transition-transform">{ICONS.target}</span>
@@ -119,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
 
                     {/* Study Streak - Integrated Sidebar Metric */}
-                    <div className="xl:col-span-1 relative p-5 flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.01] group min-h-[160px] rounded-[24px] bg-gradient-to-br from-orange-600 to-amber-700 shadow-xl border border-orange-500/30 text-white">
+                    <div className="lg:col-span-1 relative p-5 md:p-8 flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.01] group min-h-[160px] rounded-[24px] bg-gradient-to-br from-orange-600 to-amber-700 shadow-xl border border-orange-500/30 text-white">
                         <div className="text-center">
                             <div className="text-4xl mb-2 filter drop-shadow-md transform group-hover:scale-110 transition-transform duration-300">🔥</div>
                             <h3 className="text-lg lg:text-xl font-black text-white mb-0.5 leading-tight drop-shadow-sm">{t('studyStreak')}</h3>
@@ -142,10 +142,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
                 </div>
 
-                {/* Row 2: Metrics & Tasks (4-Column Grid) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                {/* Row 2: Metrics & Tasks (4-Tier Grid) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
                     {/* Today's Tasks */}
-                    <div className="glass-card p-5 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-blue-500/10 rounded-xl">{ICONS.tasks || '📋'}</span>
@@ -175,7 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
 
                     {/* Upcoming Quizzes */}
-                    <div className="glass-card p-5 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-emerald-500/10 rounded-xl">{ICONS.quizzes || '📝'}</span>
@@ -211,7 +211,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
 
                     {/* Upcoming Assignments */}
-                    <div className="glass-card p-5 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-amber-500/10 rounded-xl">{ICONS.assignments || '📁'}</span>
@@ -257,7 +257,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
 
                     {/* Task Progress Chart - Integrated as a Metric Card */}
-                    <div className="glass-card p-6 flex flex-col min-h-[340px] transition-all duration-300">
+                    <div className="glass-card p-6 md:p-8 flex flex-col min-h-[340px] transition-all duration-300">
                         <h3 className="text-xl font-black mb-6 flex items-center gap-3">
                             <span className="p-1.5 bg-indigo-500/10 rounded-xl">{ICONS.analytics}</span>
                             {t('taskProgress')}

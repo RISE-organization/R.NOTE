@@ -178,7 +178,7 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, 
                             <p className="text-xs opacity-90 truncate mt-0.5">{classItem.time}</p>
                             <p className="text-xs opacity-75 truncate mt-1">{classItem.instructor}</p>
                           </div>
-                          <div className="absolute top-2 end-2 flex space-x-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-md p-1 rounded-lg">
+                          <div className="absolute top-2 end-2 flex space-x-1 opacity-80 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity bg-white/20 backdrop-blur-md p-1 rounded-lg">
                             <button onClick={() => onEdit(classItem)} className="p-1 hover:text-indigo-200 text-white transition-colors">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" /></svg>
                             </button>
