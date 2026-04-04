@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/genai": "^1.28.0",
     "@google/generative-ai": "^0.24.1",
+    "@tsparticles/react": "^3.0.0",
     "@types/dompurify": "^3.0.5",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -24,7 +25,8 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.4.1",
-    "tailwind-merge": "^3.4.1"
+    "tailwind-merge": "^3.4.1",
+    "tsparticles": "^3.9.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
