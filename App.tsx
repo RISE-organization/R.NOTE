@@ -26,9 +26,9 @@ import { useLanguage } from './LanguageContext';
 import { useDataManagement } from './hooks/useDataManagement';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { PomodoroProvider } from './context/PomodoroContext';
+import { PomodoroProvider, usePomodoro } from './context/PomodoroContext';
 import OfflineIndicator from './components/OfflineIndicator';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
+import MainLayout from './components/MainLayout';
 
 import RamadanDecor from './components/RamadanDecor';
 import { IS_RAMADAN } from './src/config/theme';
@@ -52,9 +52,11 @@ const AppContent: React.FC = () => {
 
     // Hooks must be called unconditionally
     const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
 
-    const { classes, tasks, quizzes, assignments, notes, streak, handleDelete, handleSave: saveData, handleToggleTask, handleToggleAssignment, handleToggleQuiz, handleNoteUpdate, clearAllData } = useDataManagement();
+    const { classes, tasks, quizzes, assignments, notes, streak, totalXp, handleDelete, handleSave: saveData, handleToggleTask, handleToggleAssignment, handleToggleQuiz, handleNoteUpdate, clearAllData } = useDataManagement();
+    
+    // Explicitly destructure just for debugging if needed, but it's ready for use.
 
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
@@ -79,6 +81,19 @@ const AppContent: React.FC = () => {
             Notification.requestPermission();
         }
     }, []);
+
+    // 🔗 Auto-join room via URL parameter
+    const { setRoomId, roomId } = usePomodoro();
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const urlRoomId = params.get('room');
+        if (urlRoomId && urlRoomId !== roomId) {
+            setRoomId(urlRoomId);
+            // Remove the param from URL without refreshing to keep it clean
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+    }, [location.search, roomId, setRoomId]);
 
     // Hooks must be called unconditionally above, but we can verify auth state here
     if (loading) {
@@ -253,79 +268,56 @@ const AppContent: React.FC = () => {
     }
 
     return (
-        <div className="flex h-screen text-gray-900 dark:text-gray-100 relative overflow-hidden bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
-            {/* Toast Notification */}
-            {toast && (
-                <div style={{ position: 'fixed', top: '20px', right: '20px', background: toast.error ? '#dc2626' : '#059669', color: 'white', padding: '12px 20px', borderRadius: '8px', zIndex: 10000, fontWeight: 'bold' }}>
-                    {toast.msg}
-                </div>
-            )}
-            {IS_RAMADAN && <RamadanDecor />}
-            <PWAInstallPrompt />
-            {/* 🌊 Organic Liquid Background - Visible only in Dark Mode */}
-            <div className="absolute inset-0 w-full h-full pointer-events-none hidden dark:block">
-
-                {/* Blob 1: The Sunset (Orange) - Swimming Diagonally */}
-                <div className="absolute top-[-10%] left-[-10%] w-[80vw] h-[80vw]
-                     bg-orange-900/20 mix-blend-screen blur-[100px] opacity-20
-                     animate-first rounded-[40%_60%_70%_30%/40%_50%_60%_50%]">
-                </div>
-
-                {/* Blob 2: The Twilight (Purple) - Rotating & Morphing */}
-                <div className="absolute top-[20%] right-[-20%] w-[70vw] h-[70vw]
-                     bg-purple-900/20 mix-blend-screen blur-[100px] opacity-20
-                     animate-second rounded-[30%_70%_70%_30%/30%_30%_70%_70%]">
-                </div>
-
-                {/* Blob 3: The Deep Sea (Indigo) - Floating Up/Down */}
-                <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw]
-                     bg-indigo-900/20 mix-blend-screen blur-[120px] opacity-20
-                     animate-third rounded-[80%_20%_30%_70%/60%_40%_60%_40%]">
-                </div>
-
-            </div>
-
-            <div className="relative z-10 flex w-full">
-                <Sidebar isOpen={isSidebarOpen} />
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} onSearch={setSearchQuery} searchQuery={searchQuery} />
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto m-2 sm:m-4">
-                        <Routes>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                            <Route path="/dashboard" element={<Dashboard tasks={tasks} quizzes={quizzes} notes={notes} assignments={assignments} streak={streak} openModal={openModal} />} />
-                            <Route path="/schedule" element={<ClassSchedule classes={classes} tasks={tasks} quizzes={quizzes} assignments={assignments} onDelete={(id) => handleDelete(id, 'schedule')} onEdit={(item) => openModal('schedule', item)} />} />
-                            <Route path="/tasks" element={<Tasks tasks={tasks} onToggleComplete={handleToggleTask} onDelete={(id) => handleDelete(id, 'tasks')} onEdit={(item) => openModal('tasks', item)} searchQuery={searchQuery} />} />
-                            <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onToggleComplete={handleToggleQuiz} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
-                            <Route path="/assignments" element={<Assignments assignments={assignments} onToggleComplete={handleToggleAssignment} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
-                            <Route path="/notes" element={<Notes notes={notes} onAdd={() => openModal('notes')} onUpdate={handleNoteUpdate} onDelete={(id) => handleDelete(id, 'notes')} searchQuery={searchQuery} />} />
-                            <Route path="/pomodoro" element={<Pomodoro />} />
-
-                            <Route path="/analytics" element={<Analytics tasks={tasks} quizzes={quizzes} assignments={assignments} classes={classes} streak={streak} />} />
-                            <Route path="/profile" element={
-                                <ProfileSettings
-                                    tasks={tasks}
-                                    classes={classes}
-                                    notes={notes}
-                                    assignments={assignments}
-                                    quizzes={quizzes}
-                                    clearAllData={clearAllData}
-                                />
-                            } />
-                            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                        </Routes>
-                    </main>
-                </div>
-                {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black opacity-50 z-30 lg:hidden"></div>}
-                <SmartAssistant
-                    tasks={tasks}
-                    classes={classes}
-                    notes={notes}
-                    assignments={assignments}
-                    quizzes={quizzes}
-                    handleSave={saveData}
+        <MainLayout
+            toast={toast}
+            language={language}
+            isSidebarOpen={isSidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            sidebar={<Sidebar isOpen={isSidebarOpen} />}
+            header={
+                <Header 
+                    toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
+                    onSearch={setSearchQuery} 
+                    searchQuery={searchQuery} 
                 />
-            </div>
+            }
+            totalXp={totalXp}
+        >
+            <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard tasks={tasks} quizzes={quizzes} notes={notes} assignments={assignments} streak={streak} totalXp={totalXp} openModal={openModal} />} />
+                <Route path="/schedule" element={<ClassSchedule classes={classes} tasks={tasks} quizzes={quizzes} assignments={assignments} onDelete={(id) => handleDelete(id, 'schedule')} onEdit={(item) => openModal('schedule', item)} />} />
+                <Route path="/tasks" element={<Tasks tasks={tasks} onToggleComplete={handleToggleTask} onDelete={(id) => handleDelete(id, 'tasks')} onEdit={(item) => openModal('tasks', item)} searchQuery={searchQuery} />} />
+                <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onToggleComplete={handleToggleQuiz} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
+                <Route path="/assignments" element={<Assignments assignments={assignments} onToggleComplete={handleToggleAssignment} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
+                <Route path="/notes" element={<Notes notes={notes} onAdd={() => openModal('notes')} onUpdate={handleNoteUpdate} onDelete={(id) => handleDelete(id, 'notes')} searchQuery={searchQuery} />} />
+                <Route path="/pomodoro" element={<Pomodoro />} />
 
+                <Route path="/analytics" element={<Analytics tasks={tasks} quizzes={quizzes} assignments={assignments} classes={classes} streak={streak} totalXp={totalXp} />} />
+                <Route path="/profile" element={
+                    <ProfileSettings
+                        tasks={tasks}
+                        classes={classes}
+                        notes={notes}
+                        assignments={assignments}
+                        quizzes={quizzes}
+                        clearAllData={clearAllData}
+                    />
+                } />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+
+            {/* Smart Assistant */}
+            <SmartAssistant
+                tasks={tasks}
+                classes={classes}
+                notes={notes}
+                assignments={assignments}
+                quizzes={quizzes}
+                handleSave={handleSave}
+            />
+
+            {/* Global Modal System */}
             <Modal isOpen={!!modalContent} onClose={closeModal} title={modalContent?.item ? t('editItem') : (
                 modalContent?.view === 'tasks' ? t('addNewTask') :
                     modalContent?.view === 'quizzes' ? t('addNewQuiz') :
@@ -344,7 +336,7 @@ const AppContent: React.FC = () => {
                     </button>
                 </div>
             </Modal>
-        </div>
+        </MainLayout>
     );
 };
 

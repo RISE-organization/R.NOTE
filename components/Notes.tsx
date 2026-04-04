@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Note } from '../types';
 import { ICONS } from '../constants';
 import { useLanguage } from '../LanguageContext';
@@ -95,7 +96,33 @@ const Notes: React.FC<NotesProps> = ({ notes, onAdd, onUpdate, onDelete, searchQ
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-900 transition-colors duration-300 relative">
+    <div className="flex flex-col h-screen bg-white dark:bg-slate-900 transition-colors duration-300 relative">
+      {/* Mobile Top Navigation - Study Selector */}
+      <div className="md:hidden sticky top-0 z-20 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md px-4 py-3 border-b border-slate-200 dark:border-slate-800 mb-0">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {[
+            { id: 'tasks', name: t('tasks'), icon: ICONS.tasks, path: '/tasks' },
+            { id: 'notes', name: t('notes'), icon: ICONS.notes, path: '/notes' },
+            { id: 'assignments', name: t('assignments'), icon: ICONS.assignments, path: '/assignments' },
+            { id: 'quizzes', name: t('quizzes'), icon: ICONS.quizzes, path: '/quizzes' },
+          ].map((nav) => (
+            <Link
+              key={nav.id}
+              to={nav.path}
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${
+                nav.id === 'notes'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              <span className="text-lg">{nav.icon}</span>
+              {nav.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden relative">
       {deleteTarget && (
         <ConfirmDialog
           message={t('confirmDeleteNote') || 'Delete this note?'}
@@ -111,7 +138,7 @@ const Notes: React.FC<NotesProps> = ({ notes, onAdd, onUpdate, onDelete, searchQ
       />
       {/* Sidebar List */}
       {toastMessage && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-300">
+        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-300">
           {toastMessage}
         </div>
       )}
@@ -219,7 +246,8 @@ const Notes: React.FC<NotesProps> = ({ notes, onAdd, onUpdate, onDelete, searchQ
         )}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Notes;

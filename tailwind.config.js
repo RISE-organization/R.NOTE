@@ -32,6 +32,10 @@ export default {
       fifth: "moveInCircle 20s ease infinite",
       swing: "swing 3s ease-in-out infinite",
       "breathe-glow": "breathe-glow 4s ease-in-out infinite",
+      "blob-1": "blob-float-1 28s ease-in-out infinite",
+      "blob-2": "blob-float-2 22s ease-in-out infinite reverse",
+      "blob-3": "blob-float-3 35s ease-in-out infinite",
+      "blob-4": "blob-float-4 20s ease-in-out infinite alternate",
     },
     keyframes: {
       "breathe-glow": {
@@ -60,5 +64,11 @@ export default {
     },
   },
 
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      addUtilities({
+        '.will-change-transform': { 'will-change': 'transform' },
+      });
+    }
+  ],
 }

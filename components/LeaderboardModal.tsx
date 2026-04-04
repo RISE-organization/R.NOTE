@@ -10,18 +10,20 @@ interface LeaderboardUser {
     id: string;
     displayName: string;
     photoURL: string | null;
+    total_xp: number;
     streak: number;
+    topBadgeId?: string;
 }
 
 interface LeaderboardModalProps {
     isOpen: boolean;
     onClose: () => void;
-    currentUserStreak: number;
+    currentUserXP: number;
 }
 
-const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, currentUserStreak }) => {
+    const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, currentUserXP }) => {
     const { user } = useAuth();
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const isRtl = language === 'ar';
     const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,17 +35,18 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
         const fetchLeaderboard = async () => {
             setLoading(true);
             try {
-                // Fetch top 10 hackers
-                const topQ = query(collection(db, 'user_stats'), orderBy('streak', 'desc'), limit(10));
+                // Fetch top 10 users by XP
+                const topQ = query(collection(db, 'user_stats'), orderBy('total_xp', 'desc'), limit(10));
                 const topSnap = await getDocs(topQ);
                 const usersList: LeaderboardUser[] = topSnap.docs.map(doc => ({
                     id: doc.id,
                     displayName: doc.data().displayName || doc.data().name || doc.data().email?.split('@')[0] || 'Unknown Hacker',
                     photoURL: doc.data().photoURL || doc.data().avatar || null,
+                    total_xp: doc.data().total_xp || 0,
                     streak: doc.data().streak || 0,
+                    topBadgeId: doc.data().topBadgeId,
                 }));
                 
-                // Do NOT filter out any users; show exactly what we fetched.
                 setTopUsers(usersList);
 
                 // Rank Calculation
@@ -51,28 +54,23 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
                     const userInTop10Index = usersList.findIndex(u => u.id === user.uid);
                     
                     if (userInTop10Index !== -1) {
-                        // Current user is in Top 10 List
                         setMyRank(userInTop10Index + 1);
                     } else {
                         // Current user is outside Top 10, find global rank via count query
-                        const rankQ = query(collection(db, "user_stats"), where("streak", ">", currentUserStreak));
+                        const rankQ = query(collection(db, "user_stats"), where("total_xp", ">", currentUserXP));
                         const rankSnap = await getCountFromServer(rankQ);
                         setMyRank(rankSnap.data().count + 1);
                     }
                 }
             } catch (error: any) {
                 console.error("Failed to fetch leaderboard or calculate rank:", error);
-                // Check if Firebase requires an index
-                if (error.message?.includes('index') || error.code === 'failed-precondition') {
-                    console.error("🚨 CRITICAL: Firebase requires an index for this query. Check the URL in the error above to create it in the Firebase Console.");
-                }
             } finally {
                 setLoading(false);
             }
         };
 
         fetchLeaderboard();
-    }, [isOpen, user, currentUserStreak]);
+    }, [isOpen, user, currentUserXP]);
 
     // UI Rendering Logic...
     const getRankIcon = (index: number) => {
@@ -120,7 +118,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500 tracking-wide">{isRtl ? 'أبطال R.Note' : 'R.Note Champions'}</h2>
-                                    <p className="text-xs text-slate-400 font-medium mt-0.5">{isRtl ? 'أكثر الطلاب التزاماً بالسلاسل الدراسية' : 'Top students by study streak'}</p>
+                                    <p className="text-xs text-slate-400 font-medium mt-0.5">{isRtl ? 'المتصدرون بإجمالي نقاط الخبرة (XP)' : 'Top students by Total XP'}</p>
                                 </div>
                             </div>
                             <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95">
@@ -154,7 +152,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05, type: "spring", stiffness: 300, damping: 25 }}
                                         key={u.id} 
-                                        className={`relative z-10 flex items-center justify-between p-3 rounded-2xl border ${getRankStyle(i)} transition-all hover:bg-white/5`}
+                                        className={`relative z-10 flex items-center justify-between p-3 rounded-2xl border ${u.streak > 10 ? 'border-amber-400/50 shadow-[0_0_20px_rgba(251,191,36,0.15)] bg-gradient-to-r from-amber-500/5 to-transparent' : 'border-white/5'} ${getRankStyle(i)} transition-all hover:bg-white/5`}
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="flex items-center justify-center w-8">
@@ -170,17 +168,34 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
                                                 )}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className={`font-bold text-sm sm:text-base tracking-wide ${user?.uid === u.id ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-500' : 'text-slate-100'}`}>
+                                                <span className={`font-bold text-sm sm:text-base tracking-wide flex items-center gap-2 ${user?.uid === u.id ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-500' : 'text-slate-100'}`}>
                                                     {u.displayName}
+                                                    {u.topBadgeId && (
+                                                        <span className="text-sm cursor-help" title={t(u.topBadgeId === 'streak_master' ? 'streakMaster' : u.topBadgeId === 'xp_titan' ? 'xpTitan' : u.topBadgeId === 'task_slayer' ? 'taskSlayer' : u.topBadgeId === 'deep_diver' ? 'deepDiver' : u.topBadgeId)}>
+                                                            {u.topBadgeId === 'streak_master' ? '🔥' : 
+                                                             u.topBadgeId === 'xp_titan' ? '💎' : 
+                                                             u.topBadgeId === 'task_slayer' ? '⚔️' : 
+                                                             u.topBadgeId === 'deep_diver' ? '🌊' : '🏆'}
+                                                        </span>
+                                                    )}
                                                 </span>
-                                                {user?.uid === u.id && (
-                                                    <span className="text-[10px] text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider w-fit mt-0.5 border border-amber-500/20">{isRtl ? 'أنت' : 'You'}</span>
-                                                )}
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    {user?.uid === u.id && (
+                                                        <span className="text-[10px] text-amber-500/80 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider border border-amber-500/20">{isRtl ? 'أنت' : 'You'}</span>
+                                                    )}
+                                                    {u.streak >= 3 && (
+                                                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20">
+                                                            {u.streak} 🔥
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black/40 rounded-xl border border-white/5 backdrop-blur-md">
-                                            <Flame className={`w-4 h-4 ${u.streak > 0 ? 'text-orange-500' : 'text-slate-600'}`} />
-                                            <span className={`font-black ${i === 0 ? 'text-yellow-400' : 'text-slate-200'}`}>{u.streak}</span>
+                                            <span className="text-amber-500 text-xs font-black">⚡</span>
+                                            <span className={`text-xs font-black ${i === 0 ? 'text-yellow-400' : 'text-slate-200'}`}>
+                                                {u.total_xp.toLocaleString()} <span className="opacity-60">XP</span>
+                                            </span>
                                         </div>
                                     </motion.div>
                                 ))
@@ -199,13 +214,15 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, cu
                                         <div className="flex flex-col">
                                             <p className="font-extrabold text-white text-sm tracking-wide">{user.displayName || user.email?.split('@')[0]}</p>
                                             <p className="text-xs text-orange-400/90 font-medium tracking-wide mt-0.5">
-                                                {myRank === 1 ? (isRtl ? 'أنت في الصدارة!' : 'You are leading!') : (isRtl ? 'حافظ على سلسلتك للتقدم' : 'Keep it up to rank higher')}
+                                                {myRank === 1 ? (isRtl ? 'أنت في الصدارة!' : 'You are leading!') : (isRtl ? 'ادرس أكثر للتقدم في الترتيب' : 'Focus more to rank higher')}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 rounded-xl border border-orange-500/40 shadow-[0_0_10px_rgba(249,115,22,0.15)]">
-                                        <Flame className="w-5 h-5 text-orange-500" />
-                                        <span className="font-black text-xl text-orange-400">{currentUserStreak}</span>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-2 px-4 py-1.5 bg-orange-500/20 rounded-xl border border-orange-500/40 shadow-[0_0_10px_rgba(249,115,22,0.15)]">
+                                            <span className="text-orange-500 font-black">⚡</span>
+                                            <span className="font-black text-lg text-orange-400">{currentUserXP.toLocaleString()} XP</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

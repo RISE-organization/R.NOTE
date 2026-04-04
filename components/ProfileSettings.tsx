@@ -22,7 +22,7 @@ interface ProfileSettingsProps {
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes, assignments, quizzes, clearAllData }) => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { theme, toggleTheme } = useTheme();
     // Removed local useDataManagement hook call to avoid state desync
     const { logOut, user } = useAuth();
@@ -40,6 +40,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
     const [studentName, setStudentName] = React.useState<string>(user?.displayName || 'Student');
     const [imageError, setImageError] = React.useState<boolean>(false);
     const [nameSaved, setNameSaved] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState<'settings' | 'achievements'>('settings');
+    const { achievements: unlockedBadges } = useDataManagement();
 
     const handleSaveName = async (e?: React.SyntheticEvent) => {
         if (e) e.preventDefault();
@@ -157,10 +159,35 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
                 description={t('tourProfileDesc')}
                 features={t('tourProfileFeatures').split(',')}
             />
-            <h1 className={`text-3xl font-bold mb-6 ${IS_RAMADAN ? 'text-gold-gradient' : 'text-gray-800 dark:text-white'}`}>{t('profileSettings')}</h1>
+            <h1 className={`text-3xl font-bold mb-6 ${IS_RAMADAN ? 'text-gold-gradient' : 'text-gray-800 dark:text-white'}`}>
+                {activeTab === 'settings' ? t('profileSettings') : t('trophyRoom')}
+            </h1>
 
-            <div className={`max-w-md lg:max-w-lg mx-auto backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl rounded-[32px] p-8 transition-colors duration-300 ${IS_RAMADAN ? 'card-royal' : 'bg-white dark:bg-slate-900/60'}`}>
-                <form onSubmit={e => e.preventDefault()}>
+            {/* Tab Switcher */}
+            <div className="flex justify-center mb-8 gap-4">
+                <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-6 py-2 rounded-2xl font-bold transition-all ${activeTab === 'settings'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                        : 'bg-white/50 dark:bg-white/5 text-slate-500 hover:bg-white'}`}
+                >
+                    {t('settings') || 'Settings'}
+                </button>
+                <button
+                    onClick={() => setActiveTab('achievements')}
+                    className={`px-6 py-2 rounded-2xl font-bold transition-all flex items-center gap-2 ${activeTab === 'achievements'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                        : 'bg-white/50 dark:bg-white/5 text-slate-500 hover:bg-white'}`}
+                >
+                    <span>🏆</span>
+                    <span>{t('trophyRoom')}</span>
+                </button>
+            </div>
+
+            <div className={`max-w-md lg:max-w-2xl mx-auto backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl rounded-[32px] p-8 transition-colors duration-300 ${IS_RAMADAN ? 'card-royal' : 'bg-white dark:bg-slate-900/60'}`}>
+                {activeTab === 'settings' ? (
+                    <>
+                    <form onSubmit={e => e.preventDefault()}>
                     {/* Profile Picture */}
                     <div className="mb-8 text-center">
                         {(!avatar || imageError) ? (
@@ -322,6 +349,51 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ tasks, classes, notes
                         {t('signOut') || 'Sign Out'}
                     </button>
                 </div>
+                </>
+                ) : (
+                    /* Trophy Room / Achievements Tab */
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {[
+                            { id: 'streak_master', name: t('streakMaster'), desc: t('streakMasterDesc'), icon: '🔥', color: 'from-orange-400 to-red-500' },
+                            { id: 'xp_titan', name: t('xpTitan'), desc: t('xpTitanDesc'), icon: '💎', color: 'from-cyan-400 to-blue-500' },
+                            { id: 'task_slayer', name: t('taskSlayer'), desc: t('taskSlayerDesc'), icon: '⚔️', color: 'from-slate-400 to-slate-600' },
+                            { id: 'deep_diver', name: t('deepDiver'), desc: t('deepDiverDesc'), icon: '🌊', color: 'from-blue-400 to-indigo-600' }
+                        ].map(badge => {
+                            const isUnlocked = unlockedBadges.includes(badge.id);
+                            return (
+                                <div 
+                                    key={badge.id}
+                                    className={`relative p-6 rounded-[24px] border-2 transition-all duration-500 flex flex-col items-center text-center group ${isUnlocked 
+                                        ? `bg-white dark:bg-white/5 border-amber-400/30 shadow-[0_10px_30px_rgba(251,191,36,0.1)]` 
+                                        : 'bg-slate-50 dark:bg-black/20 border-transparent grayscale opacity-60'}`}
+                                >
+                                    {isUnlocked && (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 to-transparent rounded-[22px] pointer-events-none" />
+                                    )}
+                                    <div className={`text-6xl mb-4 transition-transform duration-500 ${isUnlocked ? 'group-hover:scale-110 drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]' : ''}`}>
+                                        {badge.icon}
+                                    </div>
+                                    <h3 className={`font-black text-lg ${isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                                        {badge.name}
+                                    </h3>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-tight">
+                                        {badge.desc}
+                                    </p>
+                                    
+                                    {isUnlocked ? (
+                                        <div className="mt-4 px-3 py-1 bg-amber-400/20 text-amber-600 dark:text-amber-400 text-[10px] font-black rounded-full uppercase tracking-widest border border-amber-400/30">
+                                            {t('unlocked')}
+                                        </div>
+                                    ) : (
+                                        <div className="mt-4 px-3 py-1 bg-slate-200 dark:bg-white/5 text-slate-400 text-[10px] font-black rounded-full uppercase tracking-widest border border-transparent">
+                                            {t('locked')}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

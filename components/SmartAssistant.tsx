@@ -31,7 +31,19 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0); // 429 Cool-down timer
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Timer for 429 Cool-down
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldown > 0) {
+      timer = setInterval(() => {
+        setCooldown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalOnClose || setInternalIsOpen;
@@ -40,7 +52,13 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    if (isOpen) {
+      // Use a small timeout to ensure DOM is fully rendered after transition
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, isOpen]);
 
   const handleSend = async () => {
     if (input.trim() === '' || isLoading) return;
@@ -52,6 +70,19 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
     try {
       const responseText = await getGeminiResponse(messages, input, language, { tasks, classes, notes, assignments, quizzes });
       
+      // Handle Rate Limit (429) - Trigger Cool-down
+      if (responseText === "__RATE_LIMIT_EXCEEDED__") {
+        setCooldown(60);
+        const restingMessage: ChatMessage = { 
+          role: 'model', 
+          text: language === 'ar' 
+            ? "⚠️ المساعد الذكي يستريح الآن لتجنب الضغط الزائد. يرجى الانتظار لمدة دقيقة واحدة وسأكون جاهزاً لمساعدتك!" 
+            : "⚠️ The AI is resting for a moment to prevent overload. Please wait a minute and I'll be ready to help!"
+        };
+        setMessages(prev => [...prev, restingMessage]);
+        return;
+      }
+
       let displayText = responseText;
       
       // Parse JSON for Agent Actions
@@ -158,11 +189,14 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={t('askForStudyTips') || "Ramadan Kareem! Ask me anything..."}
+              placeholder={cooldown > 0 
+                ? (language === 'ar' ? `يرجى الانتظار (${cooldown}ث)...` : `Please wait (${cooldown}s)...`)
+                : (t('askForStudyTips') || "Ask me anything...")
+              }
               className="w-full bg-transparent p-3 focus:outline-none text-gray-800 dark:text-white"
-              disabled={isLoading}
+              disabled={isLoading || cooldown > 0}
             />
-            <button onClick={handleSend} disabled={isLoading} className="p-3 text-indigo-500 disabled:text-gray-400">
+            <button onClick={handleSend} disabled={isLoading || cooldown > 0} className="p-3 text-indigo-500 disabled:text-gray-400">
               {ICONS.send}
             </button>
           </div>
@@ -171,75 +205,103 @@ const SmartAssistant: React.FC<SmartAssistantProps> = ({ isOpen: externalIsOpen,
     );
   }
 
-  // Modal mode (original behavior)
+  // View Area mode (Full Content Replacement)
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 end-6 bg-[#f5f5dc] hover:bg-[#ede0c8] text-slate-800 rounded-full p-3 shadow-lg z-50 transition-transform hover:scale-110 ring-2 ring-amber-200"
+        className={`fixed bottom-24 sm:bottom-6 end-6 bg-[#f5f5dc] hover:bg-[#ede0c8] text-slate-800 rounded-full p-2.5 sm:p-3 shadow-lg z-50 transition-all duration-300 hover:scale-110 ring-2 ring-amber-200 ${isOpen ? 'opacity-0 scale-0 pointer-events-none' : 'opacity-100 scale-100'}`}
         aria-label="Open Smart Assistant"
       >
-        {ICONS.ai}
+        <span className="scale-90 sm:scale-100 block">{ICONS.ai}</span>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex justify-center items-end sm:items-center p-4">
-          <div className="relative w-full max-w-lg h-[80vh]">
-            {/* RGB Glow Background */}
-            <div className={`absolute inset-0 opacity-50 blur-2xl rounded-[32px] animate-pulse ${IS_RAMADAN ? 'bg-gradient-to-r from-emerald-900 via-amber-700 to-emerald-900' : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'}`}></div>
-            <Card className="relative w-full h-full flex flex-col p-0 theme-transition">
-              <header className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <h2 className={`text-xl font-bold flex items-center ${IS_RAMADAN ? 'text-gold-gradient' : 'text-gray-800 dark:text-white'}`}>
-                  {ICONS.ai} <span className="ms-2">{t('smartAssistant')}</span>
-                </h2>
+        <div className="fixed top-16 end-0 bottom-16 md:bottom-0 start-0 md:start-56 lg:start-64 z-[22] flex flex-col transition-all duration-300 animate-in fade-in">
+          <div className="relative w-full h-full flex flex-col overflow-hidden bg-white/20 dark:bg-slate-900/20 backdrop-blur-xl">
+            {/* RGB Glow Background - Subtler for full-view */}
+
+            
+            <div className="relative w-full h-full flex flex-col theme-transition border-l border-slate-200/50 dark:border-slate-800/50">
+              <header className="px-6 py-5 border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
+                    {ICONS.ai}
+                  </div>
+                  <div>
+                    <h2 className={`text-xl sm:text-2xl font-black ${IS_RAMADAN ? 'text-gold-gradient' : 'text-gray-800 dark:text-white'}`}>
+                      {t('smartAssistant')}
+                    </h2>
+                    <p className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{language === 'ar' ? 'المساعد الذكي النشط' : 'AI POWERED STUDY COPILOT'}</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 -mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  className="p-2 -mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all group"
                   aria-label="Close"
                 >
-                  {ICONS.close}
+                  <span className="group-hover:rotate-90 block transition-transform duration-300">{ICONS.close}</span>
                 </button>
               </header>
 
-              <main className="flex-1 overflow-y-auto p-4 space-y-4">
+              <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 scrollbar-hide">
+                {messages.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                     <div className="text-6xl text-indigo-500 animate-bounce">{ICONS.ai}</div>
+                     <p className="font-black text-xl">{language === 'ar' ? 'كيف يمكنني مساعدتك اليوم؟' : 'How can I help you today?'}</p>
+                  </div>
+                )}
                 {messages.map((msg, index) => (
-                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`rounded-lg px-4 py-2 max-w-sm ${msg.role === 'user' ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                  <div key={index} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`rounded-2xl px-5 py-3 max-w-[85%] sm:max-w-[70%] shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white font-bold' : 'bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 text-gray-800 dark:text-gray-200'}`}>
                       {msg.role === 'model' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(msg.text) as string) }} />
+                        <div className="prose prose-sm sm:prose dark:prose-invert max-w-none prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(marked.parse(msg.text) as string) }} />
                       ) : (
-                        <p>{msg.text}</p>
+                        <p className="text-sm sm:text-base leading-relaxed">{msg.text}</p>
                       )}
                     </div>
                   </div>
                 ))}
                 {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg px-4 py-2">
-                      <span className="animate-pulse">{t('thinking')}</span>
+                  <div className="flex justify-end">
+                    <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 flex items-center gap-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-xs font-black animate-pulse text-indigo-500">{t('thinking')}</span>
                     </div>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </main>
 
-              <footer className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <footer className="p-4 sm:p-8 border-t border-gray-200 dark:border-gray-700 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+                <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder={t('askForStudyTips')}
-                    className="w-full bg-transparent p-3 focus:outline-none text-gray-800 dark:text-white"
-                    disabled={isLoading}
+                    placeholder={cooldown > 0 
+                      ? (language === 'ar' ? `يرجى الانتظار (${cooldown}ث)...` : `الذكاء الاصطناعي يستريح (${cooldown}ث)...`)
+                      : (t('askForStudyTips') || "Ask me about your schedule, notes, or tips...")
+                    }
+                    className="flex-1 bg-transparent p-3 sm:p-4 focus:outline-none text-gray-800 dark:text-white text-sm sm:text-base font-bold placeholder:opacity-50"
+                    disabled={isLoading || cooldown > 0}
                   />
-                  <button onClick={handleSend} disabled={isLoading} className="p-3 text-indigo-500 disabled:text-gray-400">
+                  <button 
+                    onClick={handleSend} 
+                    disabled={isLoading || cooldown > 0 || !input.trim()} 
+                    className="p-3 sm:p-4 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 disabled:bg-gray-400 disabled:shadow-none transition-all active:scale-95"
+                  >
                     {ICONS.send}
                   </button>
                 </div>
+
               </footer>
-            </Card>
+            </div>
           </div>
         </div>
       )}

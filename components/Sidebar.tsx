@@ -46,17 +46,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         { id: 'profile', name: t('profileSettings'), icon: ICONS.profile },
     ];
 
-    const baseClasses = "flex flex-col bg-slate-100/80 dark:bg-black/30 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 shadow-lg h-full transition-transform duration-300 ease-in-out z-40 w-64";
+    const baseClasses = "hidden md:flex flex-col bg-slate-100/80 dark:bg-black/30 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 shadow-lg h-full transition-all duration-300 ease-in-out z-40 w-56 lg:w-64";
 
-    // Positioning based on language
+    // Positioning and Visibility logic
     const isRTL = language === 'ar';
     const positionClasses = isRTL ? 'right-0' : 'left-0';
+    
+    // Mobile transform logic (only applies when sidebar is a drawer)
     const transformClasses = isOpen
         ? 'translate-x-0'
         : isRTL ? 'translate-x-full' : '-translate-x-full';
 
+    // Desktop/Tablet (lg+) specific behavior: Reset fixed positioning and transforms
+    const responsiveClasses = "lg:static lg:h-screen lg:sticky lg:top-0 lg:translate-x-0 lg:shadow-none lg:z-30";
+
     return (
-        <aside className={`${baseClasses} fixed inset-y-0 ${positionClasses} lg:relative lg:inset-y-auto lg:!transform-none ${transformClasses} flex flex-col`}>
+        <aside className={`${baseClasses} fixed inset-y-0 ${positionClasses} ${transformClasses} ${responsiveClasses} flex flex-col`}>
             {/* Student Info Header */}
             <div className={`pt-32 pb-4 px-4 bg-gradient-to-b ${IS_RAMADAN ? 'from-emerald-900/10 dark:from-gold-500/10' : 'from-white/20 dark:from-black/20'} to-transparent`}>
                 <div className="flex flex-col items-center relative">
@@ -122,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                         {language === 'ar' ? 'تثبيت التطبيق' : 'Install App'}
                     </button>
                 )}
-                <p className="text-xs text-slate-400 dark:text-gray-600">v2.1.0</p>
+                <p className="text-xs text-slate-400 dark:text-gray-600">v2.2.0</p>
                 <div className="text-[10px] text-slate-500 dark:text-gray-500">
                     Built with <span className="text-red-500">♥</span> by <a href="https://fahadwm101.github.io/FAHAD.GITHUP/" target="_blank" rel="noopener noreferrer" className="font-bold hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors">CHEETAH</a>
                 </div>

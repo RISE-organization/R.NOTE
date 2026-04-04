@@ -57,7 +57,7 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, 
         />
       )}
       {shareToast && (
-        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg">
+        <div className="fixed top-24 right-5 z-50 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg">
           {t('scheduleLinkCopied') || 'Link copied!'}
         </div>
       )}

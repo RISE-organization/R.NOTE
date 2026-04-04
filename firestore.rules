@@ -40,24 +40,30 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
     
-    // إحصائيات دراسة المستخدم (تُقرأ للجميع كلوحة أبطال، وتُعدل من صاحبها فقط)
+    // إحصائيات دراسة المستخدم
     match /user_stats/{userId} {
-      allow read: if isSignedIn(); // ✅ الكل يقدر يقراها حتى يشتغل Leaderboard
+      allow read: if isSignedIn(); // ✅ الكل يقدر يقراها حتى يشتغل Leaderboard والبحث عن المستخدمين
       allow write: if isSignedIn() && request.auth.uid == userId; // 🔒 التغيير فقط لك
+      
+      // ✅ المجموعات الفرعية للإحصائيات اليومية والأوسمة
+      match /pomodoro_daily/{date} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+      match /achievements/{id} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
 
     // ---------------------------------------------------------
     // 📝 المجموعات الأساسية (مع دعم المشاركة العامة)
     // ---------------------------------------------------------
 
-    // الملاحظات: يقرأها المالك أو أي شخص إذا كانت عامة
     match /notes/{noteId} {
       allow read: if isOwner() || isPublic();
-      allow create: if isValidNewDoc();  // ✅ تضمن أنك تنشئ ملاحظة لنفسك فقط
-      allow update, delete: if isOwner(); // ✅ المالك فقط يعدل ويحذف
+      allow create: if isValidNewDoc();
+      allow update, delete: if isOwner();
     }
 
-    // الجداول الدراسية: يقرأها المالك أو أي شخص إذا كانت عامة
     match /classes/{classId} {
       allow read: if isOwner() || isPublic();
       allow create: if isValidNewDoc();
@@ -84,7 +90,32 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------
-    // ⚠️ مجموعات Legacy (إذا لم تعد تستخدمها، يفضل حذفها مستقبلاً)
+    // 🤝 نظام غرف الدراسة والدعوات (جديد)
+    // ---------------------------------------------------------
+
+    // غرف الدراسة الجماعية
+    match /active_rooms/{roomId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        request.auth.uid in request.resource.data.participants || 
+        request.auth.uid == request.resource.data.hostId
+      );
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.hostId;
+    }
+
+    // نظام الدعوات
+    match /study_invites/{inviteId} {
+      allow create: if isSignedIn();
+      // السماح للمرسل أو المستقبل (عبر المعرف أو البريد) بالتعامل مع الدعوة
+      allow read, update, delete: if isSignedIn() && (
+        request.auth.uid == resource.data.senderId || 
+        request.auth.uid == resource.data.receiverId ||
+        request.auth.token.email == resource.data.receiverEmail
+      );
+    }
+
+    // ---------------------------------------------------------
+    // ⚠️ مجموعات Legacy
     // ---------------------------------------------------------
     match /public/notes/{noteId} {
       allow read: if true;

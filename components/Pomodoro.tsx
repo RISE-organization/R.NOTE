@@ -7,7 +7,7 @@ import PageTour from './PageTour';
 import { usePomodoro } from '../context/PomodoroContext';
 
 const Pomodoro: React.FC = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const {
         workMin, breakMin, timeLeft, isActive, isBreak, sessions,
         setWorkMin, setBreakMin, toggleTimer, resetTimer
@@ -32,7 +32,7 @@ const Pomodoro: React.FC = () => {
             />
             <h1 className="text-3xl font-bold mb-8 text-gold-gradient">{t('pomodoroTimer')}</h1>
 
-            <div className={`max-w-md w-full mx-auto backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl rounded-[32px] p-8 text-center transition-colors duration-300 ${IS_RAMADAN ? 'card-royal' : 'bg-white dark:bg-slate-900/60'}`}>
+            <div className={`max-w-md w-full mx-auto shadow-sm dark:shadow-2xl rounded-[32px] p-8 text-center transition-colors duration-300 ${IS_RAMADAN ? 'card-royal' : 'glass-card'}`}>
 
                 {/* Customization Inputs */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
@@ -86,8 +86,13 @@ const Pomodoro: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="text-sm text-slate-600 dark:text-gray-400 mb-8 flex items-center justify-center space-x-2 bg-slate-50 dark:bg-white/5 py-2 px-4 rounded-full inline-flex">
-                    <span className="font-medium">{sessions} {sessions === 1 ? t('session') : t('sessions')}</span>
+                <div className="flex flex-col items-center justify-center mb-8 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                    <span className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 dark:text-gray-500 mb-1 leading-none">
+                        {language === 'ar' ? 'جلسات اليوم' : "Today's Sessions"}
+                    </span>
+                    <span className="text-3xl font-black text-amber-500 dark:text-amber-400 leading-none tabular-nums">
+                        {sessions}
+                    </span>
                 </div>
 
                 <div className="flex justify-center space-x-4">

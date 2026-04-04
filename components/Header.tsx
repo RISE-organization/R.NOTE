@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ICONS } from '../constants';
 import { useLanguage } from '../LanguageContext';
+import { InviteSystem } from './InviteSystem';
 
 interface HeaderProps {
     toggleSidebar: () => void;
@@ -19,7 +20,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, onSearch, searchQuery = 
                     <div className="flex items-center gap-3 flex-shrink-0">
                         <button
                             onClick={toggleSidebar}
-                            className="text-slate-500 dark:text-gray-300 focus:outline-none lg:hidden hover:text-slate-700 dark:hover:text-white transition-colors"
+                            className="text-slate-500 dark:text-gray-300 focus:outline-none hidden hover:text-slate-700 dark:hover:text-white transition-colors"
                             aria-label="Open sidebar"
                         >
                             {ICONS.menu}
@@ -53,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, onSearch, searchQuery = 
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </button>
+                        <InviteSystem />
                         <button
                             onClick={() => switchLanguage(language === 'en' ? 'ar' : 'en')}
                             className="px-3 py-1 text-sm bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300 rounded-full border border-slate-200 dark:border-gray-700 hover:bg-slate-200 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm"

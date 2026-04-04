@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>R.Note |مساحتك الدراسية</title>
+  <meta name="description" content="R.Note - المنصة التعليمية المتكاملة للطلاب للتنظيم والمذاكرة الجماعية مع غرف الدراسة والمهام اليومية.">
+  <meta name="keywords" content="R.Note, تطبيق طلابي, مذاكرة جماعية, تنظيم وقت, مهام, غرف دراسة, دراسة ذكية">
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="manifest" href="/manifest.json">
 
@@ -23,31 +25,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    .aurora {
-      background: #f9fafb;
-      transition: background-color 0.3s ease;
-    }
-
-    .dark .aurora {
-      background: linear-gradient(-45deg, #004400, #000088, #440044, #004444, #444400);
-      background-size: 400% 400%;
-      animation: aurora 20s ease infinite;
-    }
-
-    @keyframes aurora {
-      0% {
-        background-position: 0% 50%;
-      }
-
-      50% {
-        background-position: 100% 50%;
-      }
-
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -79,7 +56,7 @@
   </script>
 </head>
 
-<body class="aurora">
+<body class="antialiased">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
