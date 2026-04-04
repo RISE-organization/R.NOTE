@@ -24,19 +24,11 @@ const getParticleOptions = (isDark: boolean): ISourceOptions => ({
         opacity: {
             value: isDark ? { min: 0.15, max: 0.5 } : 0.15, // Elegant subtle accents in light mode
             animation: {
-                enable: true,
-                speed: 0.5,
-                sync: false,
-                startValue: 'random'
+                enable: false, // Static stars for performance
             }
         },
         move: {
-            enable: true,
-            speed: { min: 0.5, max: 1.5 },
-            direction: 'top',
-            straight: true,
-            outModes: { default: 'out' },
-            random: true
+            enable: false, // NO movement for mobile stability
         },
         zIndex: { value: -50 }
     },
