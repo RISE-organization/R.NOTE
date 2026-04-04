@@ -1,8 +1,8 @@
-import React, { ReactNode } from 'react';
-import ParticleBackground from './ParticleBackground';
+import React, { ReactNode, lazy, Suspense } from 'react';
+const ParticleBackground = lazy(() => import('./ParticleBackground'));
 import RamadanDecor from './RamadanDecor';
 import PWAInstallPrompt from './PWAInstallPrompt';
-import { StudyRoom } from './StudyRoom';
+const StudyRoom = lazy(() => import('./StudyRoom').then(m => ({ default: m.StudyRoom })));
 import { IS_RAMADAN } from '../src/config/theme';
 import XpNotification from './XpNotification';
 import AchievementCelebration from './AchievementCelebration';
@@ -41,7 +41,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex h-screen text-gray-900 dark:text-gray-100 relative overflow-hidden transition-colors duration-300">
       {/* 1. High-Performance GPU Particles - Absolute First Child */}
-      <ParticleBackground />
+      <Suspense fallback={null}>
+        <ParticleBackground />
+      </Suspense>
 
       {/* 2. Global UI Overlays */}
       {toast && (
@@ -51,7 +53,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       )}
       {IS_RAMADAN && <RamadanDecor />}
       <PWAInstallPrompt />
-      <StudyRoom />
+      <Suspense fallback={null}>
+        <StudyRoom />
+      </Suspense>
 
       {/* 3. Main content wrapper (z-10 for layering) */}
       <div className="relative z-10 flex w-full h-screen overflow-hidden flex-row">

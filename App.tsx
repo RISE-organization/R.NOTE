@@ -1,37 +1,45 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import ClassSchedule from './components/ClassSchedule';
-import Tasks from './components/Tasks';
-import Quizzes from './components/Quizzes';
-import Assignments from './components/Assignments';
-import Notes from './components/Notes';
-import ProfileSettings from './components/ProfileSettings';
-import Pomodoro from './components/Pomodoro';
-import CalendarView from './components/CalendarView';
-import Analytics from './components/Analytics';
-import SmartAssistant from './components/SmartAssistant';
 import Modal from './components/Modal';
 import FormField from './components/FormField';
-import Login from './src/components/Login';
-import ResetPassword from './src/components/ResetPassword';
 import ProtectedRoute from './src/components/ProtectedRoute';
-import PublicNoteView from './components/PublicNoteView';
-import PublicScheduleView from './components/PublicScheduleView';
 import { ModalContent, AnyItem, Class, Task, Quiz, Assignment, Note, Priority } from './types';
 import { useLanguage } from './LanguageContext';
 import { useDataManagement } from './hooks/useDataManagement';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PomodoroProvider, usePomodoro } from './context/PomodoroContext';
-import OfflineIndicator from './components/OfflineIndicator';
 import MainLayout from './components/MainLayout';
-
-import RamadanDecor from './components/RamadanDecor';
 import { IS_RAMADAN } from './src/config/theme';
+
+// Lazy loaded components
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const ClassSchedule = lazy(() => import('./components/ClassSchedule'));
+const Tasks = lazy(() => import('./components/Tasks'));
+const Quizzes = lazy(() => import('./components/Quizzes'));
+const Assignments = lazy(() => import('./components/Assignments'));
+const Notes = lazy(() => import('./components/Notes'));
+const ProfileSettings = lazy(() => import('./components/ProfileSettings'));
+const Pomodoro = lazy(() => import('./components/Pomodoro'));
+const Analytics = lazy(() => import('./components/Analytics'));
+const SmartAssistant = lazy(() => import('./components/SmartAssistant'));
+const Login = lazy(() => import('./src/components/Login'));
+const ResetPassword = lazy(() => import('./src/components/ResetPassword'));
+const PublicNoteView = lazy(() => import('./components/PublicNoteView'));
+const PublicScheduleView = lazy(() => import('./components/PublicScheduleView'));
+
+// Lightweight fallback UI
+const LoadingSpinner = () => (
+    <div className="flex items-center justify-center min-h-[400px] w-full">
+        <div className="relative w-12 h-12">
+            <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
+        </div>
+    </div>
+);
 
 const App: React.FC = () => {
     return (
@@ -110,16 +118,22 @@ const AppContent: React.FC = () => {
     // Public Routes (No Auth Required)
     if (location.pathname.startsWith('/share/') || location.pathname.startsWith('/share-schedule/') || location.pathname === '/reset-password') {
         return (
-            <Routes>
-                <Route path="/share/:noteId" element={<PublicNoteView />} />
-                <Route path="/share-schedule/:userId" element={<PublicScheduleView />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-            </Routes>
+            <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                    <Route path="/share/:noteId" element={<PublicNoteView />} />
+                    <Route path="/share-schedule/:userId" element={<PublicScheduleView />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                </Routes>
+            </Suspense>
         );
     }
 
     if (!user) {
-        return <Login />;
+        return (
+            <Suspense fallback={<LoadingSpinner />}>
+                <Login />
+            </Suspense>
+        );
     }
 
     const handleSave = async () => {
@@ -283,39 +297,41 @@ const AppContent: React.FC = () => {
             }
             totalXp={totalXp}
         >
-            <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard tasks={tasks} quizzes={quizzes} notes={notes} assignments={assignments} streak={streak} totalXp={totalXp} openModal={openModal} />} />
-                <Route path="/schedule" element={<ClassSchedule classes={classes} tasks={tasks} quizzes={quizzes} assignments={assignments} onDelete={(id) => handleDelete(id, 'schedule')} onEdit={(item) => openModal('schedule', item)} />} />
-                <Route path="/tasks" element={<Tasks tasks={tasks} onToggleComplete={handleToggleTask} onDelete={(id) => handleDelete(id, 'tasks')} onEdit={(item) => openModal('tasks', item)} searchQuery={searchQuery} />} />
-                <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onToggleComplete={handleToggleQuiz} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
-                <Route path="/assignments" element={<Assignments assignments={assignments} onToggleComplete={handleToggleAssignment} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
-                <Route path="/notes" element={<Notes notes={notes} onAdd={() => openModal('notes')} onUpdate={handleNoteUpdate} onDelete={(id) => handleDelete(id, 'notes')} searchQuery={searchQuery} />} />
-                <Route path="/pomodoro" element={<Pomodoro />} />
+            <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<Dashboard tasks={tasks} quizzes={quizzes} notes={notes} assignments={assignments} streak={streak} totalXp={totalXp} openModal={openModal} />} />
+                    <Route path="/schedule" element={<ClassSchedule classes={classes} tasks={tasks} quizzes={quizzes} assignments={assignments} onDelete={(id) => handleDelete(id, 'schedule')} onEdit={(item) => openModal('schedule', item)} />} />
+                    <Route path="/tasks" element={<Tasks tasks={tasks} onToggleComplete={handleToggleTask} onDelete={(id) => handleDelete(id, 'tasks')} onEdit={(item) => openModal('tasks', item)} searchQuery={searchQuery} />} />
+                    <Route path="/quizzes" element={<Quizzes quizzes={quizzes} onDelete={(id) => handleDelete(id, 'quizzes')} onToggleComplete={handleToggleQuiz} onEdit={(item) => openModal('quizzes', item)} searchQuery={searchQuery} />} />
+                    <Route path="/assignments" element={<Assignments assignments={assignments} onToggleComplete={handleToggleAssignment} onDelete={(id) => handleDelete(id, 'assignments')} onEdit={(item) => openModal('assignments', item)} searchQuery={searchQuery} />} />
+                    <Route path="/notes" element={<Notes notes={notes} onAdd={() => openModal('notes')} onUpdate={handleNoteUpdate} onDelete={(id) => handleDelete(id, 'notes')} searchQuery={searchQuery} />} />
+                    <Route path="/pomodoro" element={<Pomodoro />} />
 
-                <Route path="/analytics" element={<Analytics tasks={tasks} quizzes={quizzes} assignments={assignments} classes={classes} streak={streak} totalXp={totalXp} />} />
-                <Route path="/profile" element={
-                    <ProfileSettings
-                        tasks={tasks}
-                        classes={classes}
-                        notes={notes}
-                        assignments={assignments}
-                        quizzes={quizzes}
-                        clearAllData={clearAllData}
-                    />
-                } />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+                    <Route path="/analytics" element={<Analytics tasks={tasks} quizzes={quizzes} assignments={assignments} classes={classes} streak={streak} totalXp={totalXp} />} />
+                    <Route path="/profile" element={
+                        <ProfileSettings
+                            tasks={tasks}
+                            classes={classes}
+                            notes={notes}
+                            assignments={assignments}
+                            quizzes={quizzes}
+                            clearAllData={clearAllData}
+                        />
+                    } />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
 
-            {/* Smart Assistant */}
-            <SmartAssistant
-                tasks={tasks}
-                classes={classes}
-                notes={notes}
-                assignments={assignments}
-                quizzes={quizzes}
-                handleSave={handleSave}
-            />
+                {/* Smart Assistant */}
+                <SmartAssistant
+                    tasks={tasks}
+                    classes={classes}
+                    notes={notes}
+                    assignments={assignments}
+                    quizzes={quizzes}
+                    handleSave={handleSave}
+                />
+            </Suspense>
 
             {/* Global Modal System */}
             <Modal isOpen={!!modalContent} onClose={closeModal} title={modalContent?.item ? t('editItem') : (
