@@ -31,12 +31,29 @@ const ResetPassword = lazy(() => import('./src/components/ResetPassword'));
 const PublicNoteView = lazy(() => import('./components/PublicNoteView'));
 const PublicScheduleView = lazy(() => import('./components/PublicScheduleView'));
 
-// Lightweight fallback UI
+// Full-screen, high-performance loading state
 const LoadingSpinner = () => (
-    <div className="flex items-center justify-center min-h-[400px] w-full">
-        <div className="relative w-12 h-12">
-            <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-t-indigo-600 rounded-full animate-spin"></div>
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950 font-sans">
+        <div className="relative w-24 h-24 mb-6">
+            {/* Pulsing Outer Glow */}
+            <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-pulse blur-xl"></div>
+            {/* Spinning Rings */}
+            <div className="absolute inset-0 border-[3px] border-indigo-500/10 rounded-full"></div>
+            <div className="absolute inset-0 border-[3px] border-t-indigo-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-4 border-[3px] border-b-purple-500 rounded-full animate-spin-reverse opacity-50"></div>
+            
+            {/* Center Icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+            </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+            <h2 className="text-sm font-black text-white italic tracking-[0.3em] uppercase opacity-80">R.Note</h2>
+            <div className="flex items-center gap-1">
+                {[0, 1, 2].map(i => (
+                    <div key={i} className="w-1 h-1 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+                ))}
+            </div>
         </div>
     </div>
 );
@@ -105,14 +122,7 @@ const AppContent: React.FC = () => {
 
     // Hooks must be called unconditionally above, but we can verify auth state here
     if (loading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-slate-950 text-white">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                    <p>Loading...</p>
-                </div>
-            </div>
-        );
+        return <LoadingSpinner />;
     }
 
     // Public Routes (No Auth Required)

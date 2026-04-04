@@ -92,18 +92,16 @@ export default defineConfig(({ mode }) => {
               if (id.includes('firebase')) {
                 return 'firebase';
               }
-              if (id.includes('@google/generative-ai') || id.includes('@google/genai')) {
+              if (id.includes('@google/generative-ai')) {
                 return 'gemini';
               }
               if (id.includes('framer-motion')) {
-                return 'animations';
+                return 'motion';
               }
-              if (id.includes('@tsparticles') || id.includes('tsparticles')) {
+              if (id.includes('@tsparticles')) {
                 return 'particles';
               }
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'react-core';
-              }
+              // Merge react-core back to vendor for maximum stability on mobile
               return 'vendor';
             }
           },
