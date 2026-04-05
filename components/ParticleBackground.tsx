@@ -6,13 +6,13 @@ import type { ISourceOptions, Engine } from '@tsparticles/engine';
 /**
  * ParticleOptions for an elegant Purple Starfield
  */
-const getParticleOptions = (isDark: boolean): ISourceOptions => ({
+const getParticleOptions = (isDark: boolean, particleCount: number): ISourceOptions => ({
     fullScreen: false,
     fpsLimit: 60,
     background: { color: { value: 'transparent' } },
     particles: {
         number: {
-            value: 250,
+            value: particleCount,
             density: { enable: true }
         },
         color: { value: isDark ? '#a855f7' : '#6366f1' }, // theme-aware color
@@ -45,8 +45,17 @@ const getParticleOptions = (isDark: boolean): ISourceOptions => ({
 const ParticleBackground: React.FC = () => {
     const [engineReady, setEngineReady] = useState(false);
     const [isDark, setIsDark] = useState(true);
+    const [particleCount, setParticleCount] = useState(100);
 
     useEffect(() => {
+        // Handle responsive particle count
+        const updateCount = () => {
+            setParticleCount(window.innerWidth < 768 ? 30 : 100);
+        };
+        
+        updateCount();
+        window.addEventListener('resize', updateCount);
+
         // Safe check for DOM
         if (typeof document !== 'undefined') {
             const checkTheme = () => document.documentElement.classList.contains('dark');
@@ -63,7 +72,10 @@ const ParticleBackground: React.FC = () => {
                 setEngineReady(true);
             });
 
-            return () => observer.disconnect();
+            return () => {
+                observer.disconnect();
+                window.removeEventListener('resize', updateCount);
+            };
         }
     }, []);
 
@@ -72,7 +84,7 @@ const ParticleBackground: React.FC = () => {
     return (
         <Particles
             id="r-note-particles"
-            options={getParticleOptions(isDark)}
+            options={getParticleOptions(isDark, particleCount)}
             className="fixed inset-0 z-[-50] pointer-events-none transition-opacity duration-1000"
         />
     );

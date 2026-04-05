@@ -111,10 +111,10 @@ const AchievementCelebration: React.FC = () => {
                         <div className="flex flex-col gap-3">
                             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
                                 <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: "100%" }}
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
                                     transition={{ duration: 4.5 }}
-                                    className="h-full bg-amber-400"
+                                    className="h-full w-full bg-amber-400 origin-left"
                                 />
                             </div>
                             <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">
