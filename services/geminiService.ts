@@ -1,75 +1,90 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../src/lib/firebase";
 import { ChatMessage, Language, Task, Class, Note, Assignment, Quiz } from '../types';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-const buildContext = (data: { tasks: Task[], classes: Class[], notes: Note[], assignments: Assignment[], quizzes: Quiz[] }) => {
-  const tasks = data.tasks.slice(0, 20).map(t => ({ title: t.title, priority: t.priority, completed: t.completed, dueDate: t.dueDate }));
-  const classes = data.classes.slice(0, 20).map(c => ({ subject: c.subject, day: c.day, time: c.time }));
-  const assignments = data.assignments.slice(0, 10).map(a => ({ title: a.title, dueDate: a.dueDate, status: a.status }));
-  const quizzes = data.quizzes.slice(0, 10).map(q => ({ subject: q.subject, date: q.date }));
-  const notes = data.notes.slice(0, 10).map(n => ({ title: n.title, subject: n.subject }));
-  return { tasks, classes, assignments, quizzes, notes };
-};
-
-export const getGeminiResponse = async (
-  history: ChatMessage[],
-  newMessage: string,
-  language: Language,
-  data: { tasks: Task[], classes: Class[], notes: Note[], assignments: Assignment[], quizzes: Quiz[] }
-): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
+export const getGeminiResponse = async (history: ChatMessage[], newMessage: string, language: Language, data: { tasks: Task[], classes: Class[], notes: Note[], assignments: Assignment[], quizzes: Quiz[] }): Promise<string> => {
   if (!apiKey) {
     return "عذراً، لم يتم إعداد مفتاح API. الرجاء التواصل مع الدعم الفني.";
   }
 
+  const trimmedMessage = newMessage.trim();
+  const personalKeywords = ['مهمة', 'مهام', 'جدول', 'واجب', 'اختبار', 'كوز', 'عندي', 'اليوم', 'دروسي', 'نظم', 'ذكرني', 'امتحان'];
+  const isPersonal = personalKeywords.some(keyword => trimmedMessage.toLowerCase().includes(keyword));
+
+  // --- 1. Selective Cache Check (Firestore) ---
+  if (!isPersonal) {
+    try {
+      const cacheRef = doc(db, 'ai_answers_cache', trimmedMessage);
+      const cacheSnap = await getDoc(cacheRef);
+      
+      if (cacheSnap.exists()) {
+        const cacheData = cacheSnap.data();
+        if (cacheData.expireAt > Date.now()) {
+          console.log("RA Cache Hit for:", trimmedMessage);
+          return cacheData.response;
+        }
+      }
+    } catch (cacheError) {
+      console.warn("Cache Read Failure (Graceful Fallback):", cacheError);
+    }
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // 1. إعداد السياق (Context)
-    const context = buildContext(data);
-    const dateStr = new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const timeStr = new Date().toLocaleTimeString(language === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+    // 2. تقليل حجم البيانات المبعوثة (إرسال المهام غير المكتملة فقط مثلاً لتوفير التوكنات)
+    // نصيحة: لا ترسل كل الملاحظات إذا كانت طويلة، أرسل فقط العناوين أو المهام النشطة.
+    const dataInfo = `مهام الطالب: ${JSON.stringify(data.tasks.slice(0, 10))}, اختبارات: ${JSON.stringify(data.quizzes)}`;
 
-    const systemText = `You are R.A (R.Note Agent), an elite executive AI assistant developed by Fahad.
-Today: ${dateStr}, ${timeStr}.
-CONTEXT: ${JSON.stringify(context)}
-GUIDELINES: Professional, concise, neutral Arabic/English. Action-oriented.`;
+    // 2. دمج تعليمات النظام بداخل الموديل مباشرة
+    const now = new Date();
+    const dateStr = now.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString(language === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // 2. استخدام المكتبة الرسمية مع تهيئة الـ System Prompt بالطريقة الصحيحة
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({ 
         model: "gemini-2.5-flash",
-        systemInstruction: systemText // المكتبة تتكفل بحقنها بالسيرفر!
+        systemInstruction: `أنت مساعد طلابي ذكي اسمه R.Note AI، وأنت مساعد ذكي مطور من قبل "أستاذ فهد".
+        تاريخ اليوم: ${dateStr}، والوقت الآن: ${timeStr}.
+        هدفك مساعدة الطالب في تنظيم وقته ودراسته بناءً على بياناته: ${dataInfo}. 
+        قواعد هامة جداً:
+        - إذا سألك أحد "من أنت؟" أو "منو طورك؟" أو عن تاريخ اليوم أو الوقت، أجب بدقة.
+        - تأكد دائماً أنك تذكر أنك "مساعد ذكي مطور من قبل أستاذ فهد".
+        - تكلم باللهجة العراقية الودودة.
+        - كن مختصراً ومباشراً.
+        - لا تكرر الترحيب (مثل هلا بيك) في كل رسالة، رحب مرة واحدة فقط في بداية المحادثة.
+        - أجب على سؤال الطالب فقط ولا تضف معلومات غير مطلوبة.`
     });
 
-    // 3. Sliding Window: أخذ آخر 6 رسائل فقط (لتقليل الكوتا)
-    const trimmedHistory = history.slice(-6);
-    const historyForGemini = trimmedHistory.map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }]
-    }));
+    const historyForGemini = history.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }]
+    }));
 
-    // 4. بناء جلسة الشات
-    const chat = model.startChat({
-      history: historyForGemini,
-      generationConfig: { maxOutputTokens: 2048 },
-    });
+    const chat = model.startChat({
+      history: historyForGemini,
+      generationConfig: {
+        maxOutputTokens: 1000,
+      },
+    });
 
-    console.log(`Contacting R.A Assistant via SDK (gemini-2.5-flash)...`);
+    // 3. إرسال رسالة الطالب "فقط" بدون أي حشو إضافي
+    const result = await chat.sendMessage(newMessage); 
+    const geminiText = result.response.text();
 
-    // 5. إرسال رسالة المستخدم (فقط رسالته، بدون حشو الـ System Text)
-    const result = await chat.sendMessage(newMessage.trim());
-    return result.response.text();
-
-  } catch (error: any) {
-    console.error(`R.A Connection Error:`, error);
-    
-    // اقتناص خطأ الـ 429 (Rate Limit) من داخل رسالة خطأ المكتبة
-    if (error.message?.includes('429') || error.status === 429) {
-        return "__RATE_LIMIT_EXCEEDED__";
+    // --- 4. Asynchronous Cache Save (Firestore) ---
+    if (!isPersonal && geminiText) {
+      setDoc(doc(db, 'ai_answers_cache', trimmedMessage), {
+        query: trimmedMessage,
+        response: geminiText,
+        expireAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days TTL
+      }).catch(err => console.error("Cache Save Error:", err));
     }
 
-    return language === 'ar'
-      ? "عذراً، حدث خطأ في الاتصال بالسيرفر. يرجى التأكد من مفتاح الـ API وصحته."
-      : "Sorry, a connection error occurred. Please verify your API key.";
-  }
+    return geminiText;
+
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    return "آسف، صار عندي خلل بسيط بالاتصال. تأكد من النت وحاول مرة ثانية.";
+  }
 };

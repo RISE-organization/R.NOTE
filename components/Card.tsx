@@ -11,7 +11,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ children, className = '', onClick, variants }) => {
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-3xl p-6 shadow-2xl backdrop-blur-2xl bg-white/60 dark:bg-slate-800/60 border border-white/30 dark:border-slate-700/30 ${className}`}
+      className={`relative overflow-hidden rounded-3xl p-4 md:p-6 shadow-2xl backdrop-blur-2xl bg-white/60 dark:bg-slate-800/60 border border-white/30 dark:border-slate-700/30 ${className}`}
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       variants={variants}

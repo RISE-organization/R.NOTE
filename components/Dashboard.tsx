@@ -91,49 +91,70 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                 features={t('tourDashboardFeatures').split(',')}
             />
 
-            <div className="flex-1 flex flex-col gap-10 relative overflow-hidden" style={{ background: 'transparent !important' }}>
+            <div className="flex-1 flex flex-col gap-6 md:gap-10 relative overflow-hidden" style={{ background: 'transparent !important' }}>
 
                 {/* Row 1: Hero & Study Streak (1/3 : 2/3 Split on LG+) */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Hero Section */}
-                    <div className={`lg:col-span-2 p-4 sm:p-6 md:p-8 text-center group relative overflow-hidden transition-all duration-700 h-full flex flex-col justify-center rounded-[24px] bg-gradient-to-br from-indigo-800 to-purple-900 shadow-xl border border-purple-500/30 dark:border-purple-500/20`}>
-                        <div className="relative z-10">
-                            <h2 className="text-2xl lg:text-3xl font-black text-white mb-2 flex items-center justify-center gap-3 drop-shadow-md">
-                                <span className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm transition-transform">{ICONS.target}</span>
-                                {t('whatShouldIStudyNow')}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+                    {/* Hero Section - AI Pill on Mobile */}
+                    <div className={`lg:col-span-2 md:p-8 text-center group relative overflow-hidden transition-all duration-700 md:h-full flex flex-col justify-center md:rounded-[24px] rounded-full h-14 md:h-auto bg-gradient-to-br from-indigo-800 to-purple-900 shadow-xl border border-purple-500/30 dark:border-purple-500/20 mx-1 md:mx-0 cursor-pointer active:scale-95`} onClick={() => setShowSuggestion(true)}>
+                        <div className="relative z-10 flex items-center justify-center gap-2 md:block">
+                            <h2 className="text-sm md:text-3xl font-black text-white flex items-center justify-center gap-2 md:gap-3 drop-shadow-md">
+                                <span className="md:p-2.5 bg-white/20 rounded-full md:rounded-xl backdrop-blur-sm transition-transform">{ICONS.target}</span>
+                                <span className="leading-tight">{t('whatShouldIStudyNow')}</span>
                             </h2>
-                            <p className="text-white/90 mb-6 text-sm lg:text-base max-w-2xl mx-auto leading-relaxed">
+                            
+                            <p className="hidden md:block text-white/90 mb-6 text-sm lg:text-base max-w-2xl mx-auto leading-relaxed mt-2">
                                 {t('studyRecommendationDesc') || 'Get personalized study recommendations based on your priorities to maximize your productivity today.'}
                             </p>
+
                             <button
-                                onClick={() => setShowSuggestion(true)}
-                                className="inline-flex items-center gap-3 bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border border-white/30 font-black py-3 px-8 rounded-2xl text-base lg:text-lg shadow-xl transition-all active:scale-95 hover:scale-105"
+                                className="hidden md:inline-flex items-center gap-3 bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border border-white/30 font-black py-3 px-8 rounded-2xl text-base lg:text-lg shadow-xl transition-all active:scale-95 hover:scale-105 mt-6"
                             >
                                 <span>{ICONS.rocket}</span>
                                 {t('whatShouldIStudyNow')}
                             </button>
                         </div>
-                        {/* Decorative background effects */}
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700"></div>
-                        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-purple-500/10 transition-all duration-700 delay-100"></div>
+                        {/* Decorative effects - hidden on mobile */}
+                        <div className="hidden md:block absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-700"></div>
+                        <div className="hidden md:block absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-purple-500/5 rounded-full blur-2xl pointer-events-none group-hover:bg-purple-500/10 transition-all duration-700 delay-100"></div>
                     </div>
 
-                    {/* Study Streak - Integrated Sidebar Metric */}
-                    <div className="lg:col-span-1 relative p-5 md:p-8 flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.01] group min-h-[160px] rounded-[24px] bg-gradient-to-br from-orange-600 to-amber-700 shadow-xl border border-orange-500/30 text-white">
-                        <div className="text-center">
-                            <div className="text-4xl mb-2 filter drop-shadow-md transform group-hover:scale-110 transition-transform duration-300">🔥</div>
-                            <h3 className="text-lg lg:text-xl font-black text-white mb-0.5 leading-tight drop-shadow-sm">{t('studyStreak')}</h3>
-                            <p className="text-4xl lg:text-5xl font-black text-white mb-0.5 tabular-nums drop-shadow-md">{streak}</p>
-                            <p className="text-xs font-bold text-white/90 mb-3">{streak === 1 ? t('daysInARow') : t('daysInARowPlural')}</p>
-                            
-                            <div className="flex items-center gap-2 mb-4 bg-white/20 px-3 py-1.5 rounded-xl border border-white/20 backdrop-blur-sm shadow-inner group-hover:bg-white/25 transition-all">
-                                <span className="text-amber-200 font-black">⚡</span>
-                                <span className="text-lg font-black text-white drop-shadow-sm">{totalXp.toLocaleString()} <span className="text-xs opacity-80">XP</span></span>
+                    {/* Study Streak - Extreme Streamline on Mobile */}
+                    <div className="lg:col-span-1 relative p-3 md:p-8 flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.01] group min-h-0 md:min-h-[160px] rounded-[24px] bg-gradient-to-br from-orange-600 to-amber-700 shadow-xl border border-orange-500/30 text-white overflow-hidden">
+                        {/* Leaderboard Link - Top Corner on Mobile */}
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setIsLeaderboardOpen(true); }}
+                            className="md:hidden absolute top-3 left-3 text-[9px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-full border border-white/20 active:scale-90 transition-all whitespace-nowrap backdrop-blur-sm shadow-md"
+                        >
+                            🏆 {language === 'ar' ? 'الأبطال' : 'Leaderboard'}
+                        </button>
+
+                        <div className="w-full">
+                            <div className="grid grid-cols-2 md:block gap-2 md:gap-0 text-center">
+                                {/* Streak Metric */}
+                                <div className="flex flex-col md:block items-center justify-center p-1 md:p-0">
+                                    <div className="text-xl md:text-4xl mb-0.5 md:mb-2 filter drop-shadow-md">🔥</div>
+                                    <h3 className="hidden md:block text-lg lg:text-xl font-black text-white mb-0.5 leading-tight drop-shadow-sm">{t('studyStreak')}</h3>
+                                    <div className="flex md:block items-baseline gap-1">
+                                        <p className="text-2xl md:text-5xl font-black text-white tabular-nums drop-shadow-md">{streak}</p>
+                                        <p className="text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-tighter truncate">{streak === 1 ? t('daysInARow') : t('daysInARowPlural')}</p>
+                                    </div>
+                                </div>
+                                
+                                {/* XP Metric */}
+                                <div className="flex flex-col md:block items-center justify-center p-1 md:p-0">
+                                    <div className="text-xl md:text-4xl mb-0.5 md:mb-2 drop-shadow-md text-amber-200">⚡</div>
+                                    <h3 className="hidden md:block text-lg lg:text-xl font-black text-white mb-0.5 leading-tight drop-shadow-sm">XP</h3>
+                                    <div className="flex md:block items-baseline gap-1">
+                                        <p className="text-2xl md:text-5xl font-black text-white tabular-nums drop-shadow-md">{totalXp.toLocaleString()}</p>
+                                        <p className="text-[10px] md:text-xs font-bold text-white/80 uppercase tracking-tighter">XP</p>
+                                    </div>
+                                </div>
                             </div>
                             
                             <button 
                                 onClick={() => setIsLeaderboardOpen(true)}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border border-white/30 text-sm lg:text-base font-black rounded-xl transition-all shadow-lg w-full justify-center active:scale-95 hover:scale-105"
+                                className="hidden md:inline-flex mt-4 items-center gap-2 px-6 py-3 bg-white/20 text-white hover:bg-white/30 backdrop-blur-md border border-white/30 text-base font-black rounded-xl transition-all shadow-lg w-full justify-center active:scale-95 hover:scale-105"
                             >
                                 <span className="text-lg drop-shadow-sm">🏆</span> 
                                 {language === 'ar' ? 'لوحة الأبطال' : 'Leaderboard'}
@@ -143,11 +164,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                 </div>
 
                 {/* Row 2: Metrics & Tasks (4-Tier Grid) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 items-start">
                     {/* Today's Tasks */}
-                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-4 md:p-8 flex flex-col min-h-0 md:min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-black flex items-center gap-3">
+                            <h2 className="text-lg md:text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-blue-500/10 rounded-xl">{ICONS.tasks || '📋'}</span>
                                 {t('todaysTasks')}
                             </h2>
@@ -159,25 +180,25 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                             {todaysTasks.length > 0 ? (
                                 <div className="space-y-4">
                                     {todaysTasks.map(task => (
-                                        <div key={task.id} className="flex items-center px-5 py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm group/item">
-                                            <span className="text-slate-900 dark:text-gray-200 font-extrabold group-hover/item:translate-x-1 transition-transform">{task.title}</span>
+                                        <div key={task.id} className="flex items-center px-3 py-2 md:px-5 md:py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm group/item">
+                                            <span className="text-slate-900 dark:text-gray-200 font-extrabold group-hover/item:translate-x-1 transition-transform text-sm md:text-base">{task.title}</span>
                                             <PriorityBadge priority={task.priority} />
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-60">
-                                    <p className="text-6xl mb-4">🎉</p>
-                                    <p className="font-bold text-lg">{t('noTasksDueToday')}</p>
+                                <div className="flex flex-row md:flex-col items-center justify-center gap-3 md:gap-0 h-full text-center py-4 md:py-10 opacity-60 min-h-0">
+                                    <p className="text-xl md:text-6xl md:mb-4">🎉</p>
+                                    <p className="font-bold text-xs md:text-lg">{t('noTasksDueToday')}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Upcoming Quizzes */}
-                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-4 md:p-8 flex flex-col min-h-0 md:min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-black flex items-center gap-3">
+                            <h2 className="text-lg md:text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-emerald-500/10 rounded-xl">{ICONS.quizzes || '📝'}</span>
                                 {t('upcomingQuizzes')}
                             </h2>
@@ -189,31 +210,31 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                             {upcomingQuizzes.length > 0 ? (
                                 <div className="space-y-4">
                                     {upcomingQuizzes.map(quiz => (
-                                        <div key={quiz.id} className="flex items-center px-5 py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm">
-                                            <div>
-                                                <p className="font-extrabold text-slate-900 dark:text-gray-100 text-base">{quiz.subject}</p>
-                                                <div className="flex items-center text-xs text-slate-600 dark:text-gray-400 mt-1 font-bold">
-                                                    <span className="me-2 text-sm">📅</span>
+                                        <div key={quiz.id} className="flex items-center px-3 py-2 md:px-5 md:py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-extrabold text-slate-900 dark:text-gray-100 text-sm md:text-base truncate">{quiz.subject}</p>
+                                                <div className="flex items-center text-[10px] md:text-xs text-slate-600 dark:text-gray-400 mt-0.5 font-bold">
+                                                    <span className="me-1 md:me-2 text-xs md:text-sm">📅</span>
                                                     {quiz.date && !isNaN(new Date(quiz.date).getTime()) ? new Date(quiz.date).toLocaleDateString() : ''}
                                                 </div>
                                             </div>
-                                            {quiz.materialsUrl && <a href={quiz.materialsUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-bold p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">{t('materials')}</a>}
+                                            {quiz.materialsUrl && <a href={quiz.materialsUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-bold p-1.5 md:p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-xs md:text-sm ms-2 shrink-0">{t('materials')}</a>}
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-60">
-                                    <p className="text-6xl mb-4">📚</p>
-                                    <p className="font-bold text-lg">{t('noUpcomingQuizzes')}</p>
+                                <div className="flex flex-row md:flex-col items-center justify-center gap-3 md:gap-0 h-full text-center py-4 md:py-10 opacity-60 min-h-0">
+                                    <p className="text-xl md:text-6xl md:mb-4">📚</p>
+                                    <p className="font-bold text-xs md:text-lg">{t('noUpcomingQuizzes')}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Upcoming Assignments */}
-                    <div className="glass-card p-5 md:p-8 flex flex-col min-h-[160px] group transition-all duration-300">
+                    <div className="glass-card p-4 md:p-8 flex flex-col min-h-0 md:min-h-[160px] group transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-black flex items-center gap-3">
+                            <h2 className="text-lg md:text-xl font-black flex items-center gap-3">
                                 <span className="p-1.5 bg-amber-500/10 rounded-xl">{ICONS.assignments || '📁'}</span>
                                 {t('assignments')}
                             </h2>
@@ -225,16 +246,16 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                             {upcomingAssignments.length > 0 ? (
                                 <div className="space-y-4">
                                     {upcomingAssignments.map(assignment => (
-                                        <div key={assignment.id} className="flex items-center px-5 py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm">
-                                            <div className="flex-1 min-w-0 me-3">
-                                                <p dir="auto" className="font-extrabold text-slate-900 dark:text-gray-100 text-start truncate">{assignment.title}</p>
-                                                <div className="flex items-center text-xs text-slate-600 dark:text-gray-400 mt-1 font-bold">
+                                        <div key={assignment.id} className="flex items-center px-3 py-2 md:px-5 md:py-4 text-sm rounded-[16px] bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700 transition-all justify-between border border-slate-300 dark:border-gray-600 shadow-sm">
+                                            <div className="flex-1 min-w-0 me-2 md:me-3">
+                                                <p dir="auto" className="font-extrabold text-slate-900 dark:text-gray-100 text-start truncate text-sm md:text-base">{assignment.title}</p>
+                                                <div className="flex items-center text-[10px] md:text-xs text-slate-600 dark:text-gray-400 mt-0.5 font-bold">
                                                     <span dir="auto" className="truncate">{assignment.subject}</span>
-                                                    <span className="mx-2 shrink-0 opacity-40">|</span>
+                                                    <span className="mx-1.5 shrink-0 opacity-40">|</span>
                                                     <span className="shrink-0">{assignment.dueDate && !isNaN(new Date(assignment.dueDate).getTime()) ? new Date(assignment.dueDate).toLocaleDateString() : 'N/A'}</span>
                                                 </div>
                                             </div>
-                                            <span className={`shrink-0 text-[10px] font-black px-2.5 py-1.5 rounded-xl uppercase tracking-tighter shadow-sm border ${assignment.status === 'Submitted'
+                                            <span className={`shrink-0 text-[9px] md:text-[10px] font-black px-2 py-1 md:px-2.5 md:py-1.5 rounded-xl uppercase tracking-tighter shadow-sm border ${assignment.status === 'Submitted'
                                                 ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:border-green-800 dark:text-green-300'
                                                 : 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:border-amber-800 dark:text-amber-300'
                                                 }`}>
@@ -244,12 +265,12 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-60">
-                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 w-16 h-16 rounded-full flex items-center justify-center mb-4 border border-emerald-100 dark:border-emerald-800/50 mx-auto">
-                                        <span className="text-emerald-500 text-3xl">✨</span>
+                                <div className="flex flex-row md:flex-col items-center justify-center gap-3 md:gap-0 h-full text-center py-3 md:py-10 opacity-60 min-h-0">
+                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 w-8 h-8 md:w-16 md:h-16 rounded-full flex items-center justify-center md:mb-4 border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
+                                        <span className="text-emerald-500 text-lg md:text-3xl">✨</span>
                                     </div>
-                                    <p className="font-bold text-lg leading-tight p-4">
-                                        {language === 'ar' ? 'لا توجد واجبات معلقة، عمل رائع!' : 'No pending assignments. Great job!'}
+                                    <p className="font-bold text-xs md:text-lg leading-tight p-0 md:p-4">
+                                        {language === 'ar' ? 'لا توجد واجبات!' : 'No pending assignments!'}
                                     </p>
                                 </div>
                             )}
@@ -257,56 +278,58 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                     </div>
 
                     {/* Task Progress Chart - Integrated as a Metric Card */}
-                    <div className="glass-card p-6 md:p-8 flex flex-col min-h-[340px] transition-all duration-300">
-                        <h3 className="text-xl font-black mb-6 flex items-center gap-3">
+                    <div className="glass-card p-4 md:p-8 flex flex-col min-h-[340px] transition-all duration-300">
+                        <h3 className="text-lg md:text-xl font-black mb-6 flex items-center gap-3">
                             <span className="p-1.5 bg-indigo-500/10 rounded-xl">{ICONS.analytics}</span>
                             {t('taskProgress')}
                         </h3>
-                        <div className="flex-1 flex flex-col items-center justify-center p-2">
-                            <div className="relative w-full h-[240px] flex justify-center items-center">
-                                {taskCompletionData.some(d => d.value > 0) ? (
-                                    <>
-                                        <ResponsiveContainer width="100%" height={240}>
-                                            <PieChart>
-                                                <Pie
-                                                    data={taskCompletionData}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={8}
-                                                    dataKey="value"
-                                                    stroke="none"
-                                                >
-                                                    {taskCompletionData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} className="filter drop-shadow-lg outline-none" />
-                                                    ))}
-                                                </Pie>
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mt-3">
-                                            <p className="text-5xl font-black text-slate-800 dark:text-white leading-none tabular-nums">{totalTasks}</p>
-                                            <p className="text-xs text-slate-400 dark:text-gray-500 uppercase font-black tracking-widest mt-2">{t('total') || 'Total'}</p>
+                        <div className="flex-1 flex flex-col items-center justify-center p-1 md:p-2">
+                            <div className="flex flex-col md:flex-col items-center justify-center w-full gap-4">
+                                <div className="relative w-32 h-32 md:w-full md:h-[240px] flex justify-center items-center shrink-0">
+                                    {taskCompletionData.some(d => d.value > 0) ? (
+                                        <>
+                                            <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 128 : 240}>
+                                                <PieChart>
+                                                    <Pie
+                                                        data={taskCompletionData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={window.innerWidth < 768 ? 40 : 60}
+                                                        outerRadius={window.innerWidth < 768 ? 55 : 80}
+                                                        paddingAngle={8}
+                                                        dataKey="value"
+                                                        stroke="none"
+                                                    >
+                                                        {taskCompletionData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} className="filter drop-shadow-lg outline-none" />
+                                                        ))}
+                                                    </Pie>
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mt-1.5 md:mt-3">
+                                                <p className="text-2xl md:text-5xl font-black text-slate-800 dark:text-white leading-none tabular-nums">{totalTasks}</p>
+                                                <p className="text-[8px] md:text-xs text-slate-400 dark:text-gray-500 uppercase font-black tracking-widest mt-1 md:mt-2">{t('total') || 'Total'}</p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-center opacity-40">
+                                            <div className="text-4xl mb-2">📊</div>
+                                            <p className="text-xs font-bold uppercase tracking-widest">{t('noData')}</p>
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center text-center opacity-40">
-                                        <div className="text-4xl mb-2">📊</div>
-                                        <p className="text-xs font-bold uppercase tracking-widest">{t('noData')}</p>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="w-full mt-6 grid grid-cols-2 gap-4">
-                                {taskCompletionData.map((entry, index) => (
-                                    <div key={index} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></div>
-                                        <div className="flex flex-col">
-                                            <span className="text-slate-500 dark:text-gray-400 text-[10px] uppercase font-black leading-none mb-1">{entry.name}</span>
-                                            <span className="text-slate-800 dark:text-white text-base font-black leading-none tabular-nums">{entry.value}</span>
+                                    )}
+                                </div>
+                                
+                                <div className="w-full mt-2 md:mt-6 flex flex-row md:grid md:grid-cols-2 gap-2 md:gap-4 items-center justify-center">
+                                    {taskCompletionData.map((entry, index) => (
+                                        <div key={index} className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex-1 md:flex-none">
+                                            <div className="w-2 md:w-3 h-2 md:h-3 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></div>
+                                            <div className="flex flex-col">
+                                                <span className="text-slate-500 dark:text-gray-400 text-[8px] md:text-[10px] uppercase font-black leading-none mb-1">{entry.name}</span>
+                                                <span className="text-slate-800 dark:text-white text-sm md:text-base font-black leading-none tabular-nums">{entry.value}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
 

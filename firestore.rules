@@ -125,5 +125,9 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isOwner();
     }
+
+    match /ai_answers_cache/{document} {
+      allow read, write: if true; 
+    }
   }
 }
