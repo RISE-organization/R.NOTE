@@ -10,13 +10,14 @@ export const getGeminiResponse = async (history: ChatMessage[], newMessage: stri
   }
 
   const trimmedMessage = newMessage.trim();
+  const safeCacheId = encodeURIComponent(trimmedMessage).replace(/\./g, '%2E');
   const personalKeywords = ['مهمة', 'مهام', 'جدول', 'واجب', 'اختبار', 'كوز', 'عندي', 'اليوم', 'دروسي', 'نظم', 'ذكرني', 'امتحان'];
-  const isPersonal = personalKeywords.some(keyword => trimmedMessage.toLowerCase().includes(keyword));
+  const isPersonal = personalKeywords.some(keyword => trimmedMessage.toLowerCase().includes(keyword)) || trimmedMessage.length > 200;
 
   // --- 1. Selective Cache Check (Firestore) ---
   if (!isPersonal) {
     try {
-      const cacheRef = doc(db, 'ai_answers_cache', trimmedMessage);
+      const cacheRef = doc(db, 'ai_answers_cache', safeCacheId);
       const cacheSnap = await getDoc(cacheRef);
       
       if (cacheSnap.exists()) {
@@ -74,7 +75,7 @@ export const getGeminiResponse = async (history: ChatMessage[], newMessage: stri
 
     // --- 4. Asynchronous Cache Save (Firestore) ---
     if (!isPersonal && geminiText) {
-      setDoc(doc(db, 'ai_answers_cache', trimmedMessage), {
+      setDoc(doc(db, 'ai_answers_cache', safeCacheId), {
         query: trimmedMessage,
         response: geminiText,
         expireAt: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days TTL
