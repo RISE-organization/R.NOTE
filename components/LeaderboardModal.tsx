@@ -21,19 +21,44 @@ interface LeaderboardModalProps {
     currentUserXP: number;
 }
 
-    const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, currentUserXP }) => {
+    // Module-level cache to persist across component mounts during the session
+let cachedTopUsers: LeaderboardUser[] | null = null;
+let cachedMyRank: number | null = null;
+let lastFetchTime: number = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose, currentUserXP }) => {
     const { user } = useAuth();
     const { language, t } = useLanguage();
     const isRtl = language === 'ar';
-    const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [myRank, setMyRank] = useState<number | null>(null);
+    const [topUsers, setTopUsers] = useState<LeaderboardUser[]>(cachedTopUsers || []);
+    const [loading, setLoading] = useState(!cachedTopUsers);
+    const [myRank, setMyRank] = useState<number | null>(cachedMyRank);
 
     useEffect(() => {
         if (!isOpen) return;
 
         const fetchLeaderboard = async () => {
-            setLoading(true);
+            const now = Date.now();
+            const isCacheValid = cachedTopUsers && (now - lastFetchTime < CACHE_TTL);
+
+            // If cache is fresh, skip re-fetching
+            if (isCacheValid) {
+                setTopUsers(cachedTopUsers!);
+                setMyRank(cachedMyRank);
+                setLoading(false);
+                return;
+            }
+
+            // SWR: If we have stale cache, show it immediately but re-fetch in background
+            if (cachedTopUsers) {
+                setTopUsers(cachedTopUsers);
+                setMyRank(cachedMyRank);
+                setLoading(false);
+            } else {
+                setLoading(true);
+            }
+
             try {
                 // Fetch top 10 users by XP
                 const topQ = query(collection(db, 'user_stats'), orderBy('total_xp', 'desc'), limit(10));
@@ -47,21 +72,29 @@ interface LeaderboardModalProps {
                     topBadgeId: doc.data().topBadgeId,
                 }));
                 
-                setTopUsers(usersList);
-
+                let currentRank = null;
                 // Rank Calculation
                 if (user) {
                     const userInTop10Index = usersList.findIndex(u => u.id === user.uid);
                     
                     if (userInTop10Index !== -1) {
-                        setMyRank(userInTop10Index + 1);
+                        currentRank = userInTop10Index + 1;
                     } else {
                         // Current user is outside Top 10, find global rank via count query
                         const rankQ = query(collection(db, "user_stats"), where("total_xp", ">", currentUserXP));
                         const rankSnap = await getCountFromServer(rankQ);
-                        setMyRank(rankSnap.data().count + 1);
+                        currentRank = rankSnap.data().count + 1;
                     }
                 }
+
+                // Update Persistence
+                cachedTopUsers = usersList;
+                cachedMyRank = currentRank;
+                lastFetchTime = Date.now();
+
+                // Update State
+                setTopUsers(usersList);
+                setMyRank(currentRank);
             } catch (error: any) {
                 console.error("Failed to fetch leaderboard or calculate rank:", error);
             } finally {
@@ -73,22 +106,44 @@ interface LeaderboardModalProps {
     }, [isOpen, user, currentUserXP]);
 
     // UI Rendering Logic...
-    const getRankIcon = (index: number) => {
+    const getRankIcon = React.useMemo(() => (index: number) => {
         switch(index) {
             case 0: return <Crown className="w-6 h-6 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]" />;
             case 1: return <Medal className="w-5 h-5 text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]" />;
             case 2: return <Medal className="w-5 h-5 text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.6)]" />;
             default: return <span className="font-bold text-slate-500 w-5 text-center text-sm">{index + 1}</span>;
         }
-    };
+    }, []);
 
-    const getRankStyle = (index: number) => {
+    const getRankStyle = React.useMemo(() => (index: number) => {
         switch(index) {
             case 0: return "bg-gradient-to-r from-yellow-500/15 via-yellow-500/5 to-transparent border-yellow-500/40 shadow-[0_0_15px_rgba(250,204,21,0.1)]";
             case 1: return "bg-gradient-to-r from-slate-400/10 to-transparent border-slate-400/30";
             case 2: return "bg-gradient-to-r from-amber-600/10 to-transparent border-amber-600/30";
             default: return "bg-slate-800/30 border-white/5";
         }
+    }, []);
+
+    const containerVariants = {
+        hidden: { opacity: 0, scale: 0.95, y: 20 },
+        visible: { 
+            opacity: 1, 
+            scale: 1, 
+            y: 0,
+            transition: { 
+                type: "spring" as const, 
+                damping: 25, 
+                stiffness: 400,
+                when: "beforeChildren",
+                staggerChildren: 0.03
+            }
+        },
+        exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, x: isRtl ? 15 : -15 },
+        visible: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 400, damping: 30 } }
     };
 
     return (
@@ -104,10 +159,10 @@ interface LeaderboardModalProps {
                     />
                     
                     <motion.div
-                         initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                         exit={{ opacity: 0, scale: 0.95, y: 30 }}
-                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                         variants={containerVariants}
+                         initial="hidden"
+                         animate="visible"
+                         exit="exit"
                          className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
                     >
                         {/* Header */}
@@ -132,7 +187,7 @@ interface LeaderboardModalProps {
                             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none" />
                             <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
 
-                            {loading ? (
+                            {loading && !topUsers.length ? (
                                 <div className="flex flex-col justify-center items-center py-16 gap-3">
                                     <div className="w-8 h-8 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin" />
                                     <p className="text-sm text-slate-400">{isRtl ? 'جاري جلب بيانات الأبطال...' : 'Fetching champions...'}</p>
@@ -148,9 +203,7 @@ interface LeaderboardModalProps {
                             ) : (
                                 topUsers.map((u, i) => (
                                     <motion.div 
-                                        initial={{ opacity: 0, x: isRtl ? 20 : -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                                        variants={itemVariants}
                                         key={u.id} 
                                         className={`relative z-10 flex items-center justify-between p-3 rounded-2xl border ${u.streak > 10 ? 'border-amber-400/50 shadow-[0_0_20px_rgba(251,191,36,0.15)] bg-gradient-to-r from-amber-500/5 to-transparent' : 'border-white/5'} ${getRankStyle(i)} transition-all hover:bg-white/5`}
                                     >
