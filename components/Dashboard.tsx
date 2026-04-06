@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Task, Quiz, Note, Assignment, Priority, ModalContent } from '../types';
 import { ICONS } from '../constants';
@@ -39,6 +39,26 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
     const { t, language } = useLanguage();
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+    useEffect(() => {
+        const debounce = (fn: Function, ms: number) => {
+            let timeoutId: ReturnType<typeof setTimeout>;
+            return function (this: any, ...args: any[]) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn.apply(this, args), ms);
+            };
+        };
+
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        const debouncedResize = debounce(handleResize, 250);
+        window.addEventListener('resize', debouncedResize);
+        return () => window.removeEventListener('resize', debouncedResize);
+    }, []);
 
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -288,14 +308,14 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks = [], quizzes = [], notes =
                                 <div className="relative w-32 h-32 md:w-full md:h-[240px] flex justify-center items-center shrink-0">
                                     {taskCompletionData.some(d => d.value > 0) ? (
                                         <>
-                                            <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 128 : 240}>
+                                            <ResponsiveContainer width="100%" height={isMobile ? 128 : 240}>
                                                 <PieChart>
                                                     <Pie
                                                         data={taskCompletionData}
                                                         cx="50%"
                                                         cy="50%"
-                                                        innerRadius={window.innerWidth < 768 ? 40 : 60}
-                                                        outerRadius={window.innerWidth < 768 ? 55 : 80}
+                                                        innerRadius={isMobile ? 40 : 60}
+                                                        outerRadius={isMobile ? 55 : 80}
                                                         paddingAngle={8}
                                                         dataKey="value"
                                                         stroke="none"

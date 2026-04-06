@@ -48,13 +48,23 @@ const ParticleBackground: React.FC = () => {
     const [particleCount, setParticleCount] = useState(100);
 
     useEffect(() => {
+        const debounce = (fn: Function, ms: number) => {
+            let timeoutId: ReturnType<typeof setTimeout>;
+            return function (this: any, ...args: any[]) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn.apply(this, args), ms);
+            };
+        };
+
         // Handle responsive particle count
         const updateCount = () => {
             setParticleCount(window.innerWidth < 768 ? 30 : 100);
         };
         
+        const debouncedUpdateCount = debounce(updateCount, 250);
+
         updateCount();
-        window.addEventListener('resize', updateCount);
+        window.addEventListener('resize', debouncedUpdateCount);
 
         // Safe check for DOM
         if (typeof document !== 'undefined') {
@@ -74,7 +84,7 @@ const ParticleBackground: React.FC = () => {
 
             return () => {
                 observer.disconnect();
-                window.removeEventListener('resize', updateCount);
+                window.removeEventListener('resize', debouncedUpdateCount);
             };
         }
     }, []);
