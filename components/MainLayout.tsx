@@ -1,5 +1,4 @@
 import React, { ReactNode, lazy, Suspense } from 'react';
-const ParticleBackground = lazy(() => import('./ParticleBackground'));
 import RamadanDecor from './RamadanDecor';
 import PWAInstallPrompt from './PWAInstallPrompt';
 const StudyRoom = lazy(() => import('./StudyRoom').then(m => ({ default: m.StudyRoom })));
@@ -39,13 +38,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   totalXp = 0
 }) => {
   return (
-    <div className="flex h-screen text-gray-900 dark:text-gray-100 relative overflow-hidden transition-colors duration-300">
-      {/* 1. High-Performance GPU Particles - Absolute First Child */}
-      <Suspense fallback={null}>
-        <ParticleBackground />
-      </Suspense>
-
-      {/* 2. Global UI Overlays */}
+    <div className="flex h-screen text-gray-900 dark:text-gray-100 relative overflow-hidden transition-colors duration-300 bg-slate-50 dark:bg-slate-950 dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 to-black">
+      {/* 1. Global UI Overlays */}
       {toast && (
         <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: toast.error ? '#dc2626' : '#059669', color: 'white', padding: '12px 24px', borderRadius: '12px', zIndex: 100000, fontWeight: 'black', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', whiteSpace: 'nowrap' }}>
           {toast.msg}
