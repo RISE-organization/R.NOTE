@@ -16,6 +16,7 @@ interface ClassScheduleProps {
   assignments: Assignment[];
   onDelete: (id: string) => void;
   onEdit: (item: Class) => void;
+  makeSchedulePublic: (userId: string, isPublic: boolean) => Promise<void>;
 }
 
 const timeSlots = [
@@ -23,7 +24,7 @@ const timeSlots = [
   '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'
 ];
 
-const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, assignments, onDelete, onEdit }) => {
+const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, assignments, onDelete, onEdit, makeSchedulePublic }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -91,7 +92,10 @@ const ClassSchedule: React.FC<ClassScheduleProps> = ({ classes, tasks, quizzes, 
         </div>
 
         <div className="flex items-center">
-          <button onClick={() => {
+          <button onClick={async () => {
+            if (user) {
+              await makeSchedulePublic(user.uid, true);
+            }
             const url = `${window.location.origin}/share-schedule/${user?.uid}`;
             navigator.clipboard.writeText(url);
             setShareToast(true);

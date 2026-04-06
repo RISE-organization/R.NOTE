@@ -137,24 +137,38 @@ const PublicScheduleView: React.FC = () => {
                                         {time}
                                     </div>
                                     {originalDays.map((day) => {
+                                        const parseTime = (tStr: string) => {
+                                            const [timePart, meridiem] = (tStr || '').split(' ');
+                                            const [hour] = (timePart || '').split(':');
+                                            return {
+                                                hour: parseInt(hour, 10),
+                                                meridiem: meridiem?.toUpperCase()
+                                            };
+                                        };
+
                                         const classItem = classes.find(c => {
                                             if (c.day !== day) return false;
-                                            // Simple time matching logic
-                                            const [timePart, meridiem] = time.split(' ');
-                                            const [hour] = timePart.split(':');
-                                            const slotHour = parseInt(hour, 10);
-
-                                            const [cTimePart, cMeridiem] = c.time.split(' ');
-                                            const [cHour] = cTimePart.split(':');
-                                            const classHour = parseInt(cHour, 10);
-
-                                            return slotHour === classHour && meridiem === cMeridiem;
+                                            const slotTime = parseTime(time);
+                                            const classTime = parseTime(c.time);
+                                            return slotTime.hour === classTime.hour && slotTime.meridiem === classTime.meridiem;
                                         });
+
+                                        const getColorClass = (colorClass: string | undefined) => {
+                                            const safeColorClass = colorClass || 'bg-indigo-600';
+                                            let finalColor = safeColorClass;
+
+                                            // Map legacy/problematic colors to new high-contrast ones
+                                            if (safeColorClass.includes('yellow')) finalColor = 'bg-orange-600';
+                                            else if (safeColorClass.includes('pink') || safeColorClass.includes('rose')) finalColor = 'bg-teal-600';
+                                            else if (safeColorClass.includes('purple') || safeColorClass.includes('indigo')) finalColor = 'bg-cyan-600';
+
+                                            return `${finalColor} dark:${finalColor}/80`;
+                                        };
 
                                         return (
                                             <div key={`${day}-${time}`} className="border-b ltr:border-r rtl:border-l border-white/20 h-24 p-1 group relative transition-colors hover:bg-white/5">
                                                 {classItem && (
-                                                    <div className={`rounded-xl p-3 h-full flex flex-col justify-between ${classItem.color} bg-opacity-20 text-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden`}>
+                                                    <div className={`rounded-xl p-3 h-full flex flex-col justify-between ${getColorClass(classItem.color)} text-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden`}>
                                                         <div className="overflow-hidden">
                                                             <p className="font-bold text-sm truncate leading-tight">{classItem.subject}</p>
                                                             <p className="text-xs opacity-90 truncate mt-0.5">{classItem.time}</p>

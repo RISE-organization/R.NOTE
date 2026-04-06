@@ -486,12 +486,30 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
 
     const getPublicSchedule = useCallback(async (userId: string): Promise<Class[]> => {
         try {
-            const q = query(collection(db, 'classes'), where('userId', '==', userId));
+            const q = query(
+                collection(db, 'classes'), 
+                where('userId', '==', userId),
+                where('isPublic', '==', true)
+            );
             const snapshot = await getDocs(q);
             return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Class));
         } catch (error) {
             console.error("Error fetching public schedule:", error);
             return [];
+        }
+    }, []);
+
+    const makeSchedulePublic = useCallback(async (userId: string, isPublic: boolean) => {
+        try {
+            const q = query(collection(db, 'classes'), where('userId', '==', userId));
+            const snapshot = await getDocs(q);
+            const batch = writeBatch(db);
+            snapshot.docs.forEach(docSnap => {
+                batch.update(docSnap.ref, { isPublic });
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Error making schedule public:", error);
         }
     }, []);
 
@@ -699,6 +717,7 @@ export const useDataManagement = (skipSubscription: boolean = false) => {
         clearAllData,
         getPublicNote,
         getPublicSchedule,
+        makeSchedulePublic,
         importData,
         importSchedule,
         sendInvitation,
