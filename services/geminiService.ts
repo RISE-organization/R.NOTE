@@ -44,7 +44,7 @@ export const getGeminiResponse = async (history: ChatMessage[], newMessage: stri
     const timeStr = now.toLocaleTimeString(language === 'ar' ? 'ar-SA' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash", // ملاحظة: يفضل استخدام 1.5 حالياً لاستقرار الخدمة
+        model: "gemini-2.5-flash",
         systemInstruction: `أنت مساعد طلابي ذكي اسمه R.Note AI، وأنت مساعد ذكي مطور من قبل "أستاذ فهد".
         تاريخ اليوم: ${dateStr}، والوقت الآن: ${timeStr}.
         هدفك مساعدة الطالب في تنظيم وقته ودراسته بناءً على بياناته: ${dataInfo}. 
