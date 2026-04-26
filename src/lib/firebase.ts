@@ -2,15 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
-// ⚠️ تنبيه: استبدل القيم اللي تحت بالقيم الحقيقية من Firebase Console
-// تروح لـ Project Settings -> General -> Your apps -> Firebase SDK snippet
+// إعدادات فايربيس الرسمية لمشروع R.Note - تم الحقن يدوياً للعمل على السيرفر
 const firebaseConfig = {
-  apiKey: "AIzaSyA...", // ضع هنا الـ Web API Key الحقيقي
+  apiKey: "AIzaSyBuqrjzMKBISvEuGaB1VEarkf9QIK3e4Po",
   authDomain: "rnote-b0d30.firebaseapp.com",
   projectId: "rnote-b0d30",
   storageBucket: "rnote-b0d30.firebasestorage.app",
-  messagingSenderId: "123456789012", // ضع هنا الـ Messaging Sender ID الحقيقي
-  appId: "1:123456789012:web:abcdef123456" // ضع هنا الـ App ID الحقيقي
+  messagingSenderId: "186446875970",
+  appId: "1:186446875970:web:f8434b845c67aed5334cdb"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -19,13 +18,13 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-// تفعيل ميزة التخزين المحلي (Offline Persistence)
+// تفعيل ميزة التخزين المحلي لضمان استمرارية العمل بدون إنترنت
 enableIndexedDbPersistence(db).catch(err => {
   if (err.code === 'failed-precondition') {
-    // تفتح أكثر من تبويب بنفس الوقت - الميزة تشتغل بتبويب واحد فقط
+    // تظهر عند فتح التبويبات المتعددة
     console.warn('Offline persistence disabled: multiple tabs open.');
   } else if (err.code === 'unimplemented') {
-    // المتصفح مالتك قديم أو ما يدعم هذي الميزة
+    // تظهر إذا كان المتصفح لا يدعم الميزة
     console.warn('Offline persistence not supported in this browser.');
   }
 });
